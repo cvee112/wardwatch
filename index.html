@@ -976,16 +976,19 @@
                 // "Phantom Load" Composition:
                 
                 // 1. Unavoidable Incoming Work (Coverage from others)
-                // Carl gets a lot of this (Last Man Standing). Linkee gets none.
+                // Increased from 0.60 to 0.85. 
+                // This essentially blocks Last-Man-Standing doctors (Carl) from taking 
+                // Primary patients at 0% setting, forcing them to rely solely on coverage work.
                 let coverageRatio = totalCoverageScore > 0 ? d.coverageScore / totalCoverageScore : 0;
-                const incomingLoad = totalBurden * 0.60 * coverageRatio;
+                const incomingLoad = totalBurden * 0.85 * coverageRatio;
 
                 // 2. Created Outgoing Work (Coverage Debt)
-                // Linkee creates a lot of this (Short Shift). Carl creates none.
-                // We penalize this to discourage Primary assignment to short-shift doctors at 0% setting.
-                // Factor 0.35 ensures Linkee looks "busier" than Claire, pushing patients to Claire.
+                // Decreased from 0.35 to 0.15.
+                // We reduce the penalty for short-shift doctors (Linkee), allowing them to take
+                // MORE primary patients. The resulting coverage work will flow to Claire,
+                // helping equalise Claire and Linkee against Carl.
                 const debtRatio = shiftHours > 0 ? (1.0 - (d.availHours / shiftHours)) : 0;
-                const debtLoad = totalBurden * 0.35 * debtRatio;
+                const debtLoad = totalBurden * 0.15 * debtRatio;
 
                 // Combine for Phantom Load
                 // Only applies at Equal Totals (equityFactor < 1)
