@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WardWatch: Patient Monitor Allocator</title>
-    <!-- Using Tailwind CSS -->
+    <title>EquiRound - Patient Monitor Allocator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Using FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
@@ -15,13 +13,11 @@
         .fade-in { animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
-        /* Custom scrollbar */
         .patient-list-scroll::-webkit-scrollbar { width: 6px; }
         .patient-list-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
         .patient-list-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .patient-list-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* Timeline Connector */
         .timeline-line::before {
             content: '';
             position: absolute;
@@ -33,11 +29,9 @@
             z-index: 0;
         }
 
-        /* Accordion transition */
         .max-h-0 { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
         .max-h-96 { max-height: 24rem; overflow-y: auto; transition: max-height 0.3s ease-in; }
 
-        /* Toast Notification */
         #toast {
             visibility: hidden;
             min-width: 250px;
@@ -60,7 +54,6 @@
             bottom: 50px;
         }
         
-        /* Modal Overlay */
         #importModal { background-color: rgba(0,0,0,0.5); }
     </style>
 </head>
@@ -68,11 +61,10 @@
 
     <div class="max-w-full mx-auto">
         
-        <!-- Header -->
         <header class="mb-8 flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-slate-200">
             <div class="text-center md:text-left mb-4 md:mb-0">
-                <h1 class="text-2xl font-bold text-slate-800"><i class="fa-solid fa-heart-pulse text-red-500"></i> Equitable Patient Monitor Allocator</h1>
-                <p class="text-slate-500 text-sm mt-1">Enter shift details, doctors, patients, and locations.</p>
+                <h1 class="text-2xl font-bold text-slate-800"><i class="fa-solid fa-heart-pulse text-red-500"></i> EquiRound</h1>
+                <p class="text-slate-500 text-sm mt-1">Equitable Patient Monitor Allocator</p>
             </div>
             <button onclick="toggleImportModal()" class="bg-slate-700 text-white text-sm px-4 py-2 rounded shadow hover:bg-slate-800 transition">
                 <i class="fa-solid fa-file-import mr-2"></i> Import Config
@@ -81,13 +73,9 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
             
-            <!-- COLUMN 1: CONFIGURATION & DOCTORS -->
             <div class="space-y-6 lg:col-span-1">
-                
-                <!-- Step 1: Shift Time -->
                 <div class="card p-5 border-l-4 border-blue-500">
                     <h2 class="text-xl font-bold mb-4 text-slate-700">1. Shift & Q8 Config</h2>
-                    
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
@@ -121,169 +109,101 @@
                     </div>
                 </div>
 
-                <!-- Step 2: Doctors (Enhanced) -->
                 <div class="card p-5 border-l-4 border-green-500">
-                    <h2 class="text-xl font-bold mb-4 text-slate-700">2. Doctors & Prefs</h2>
+                    <h2 class="text-xl font-bold mb-4 text-slate-700">2. Doctors & Availability</h2>
                     <div class="flex gap-2 mb-3">
                         <input type="text" id="newDocName" placeholder="New Doc Name..." class="flex-1 p-2 border rounded shadow-sm text-sm" onkeydown="if(event.key === 'Enter') addDoctor()">
                         <button onclick="addDoctor()" class="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700"><i class="fa-solid fa-plus"></i></button>
                     </div>
-                    
-                    <!-- Doctor List Container -->
-                    <div id="docList" class="space-y-3 max-h-[600px] overflow-y-auto patient-list-scroll pr-1">
-                        <!-- Doc Cards go here -->
-                    </div>
+                    <div id="docList" class="space-y-3 max-h-[600px] overflow-y-auto patient-list-scroll pr-1"></div>
                 </div>
-
             </div>
 
-            <!-- COLUMN 2: PATIENTS (Categorized) -->
             <div class="lg:col-span-3 space-y-6">
-                
-                <!-- Step 3: Frequencies -->
                 <div class="h-auto">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-xl font-bold text-slate-700">3. Patient Categories (Frequency)</h2>
                         <span class="text-sm bg-purple-100 text-purple-800 py-1 px-3 rounded-full font-bold" id="patientCountBadge">0 Patients</span>
                     </div>
-
-                    <!-- 4-Column Grid for Q1, Q2, Q4, Q8 -->
                     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                        
-                        <!-- Q1 Column -->
                         <div class="bg-red-50 border border-red-200 rounded-lg flex flex-col h-80">
                             <div class="p-3 bg-red-100 border-b border-red-200 rounded-t-lg">
-                                <h3 class="font-bold text-red-800 flex justify-between items-center">
-                                    Q1 (Hourly)
-                                    <span class="text-xs bg-white text-red-600 px-2 py-0.5 rounded-full" id="count-q1">0</span>
-                                </h3>
-                                <div class="mt-2">
-                                    <textarea id="input-q1" rows="2" placeholder="Paste names here...&#10;Press Enter to add" class="w-full text-sm p-2 border border-red-200 rounded focus:ring-2 focus:ring-red-400 focus:outline-none resize-none" onkeydown="handlePatientInput(event, 1)"></textarea>
-                                </div>
+                                <h3 class="font-bold text-red-800 flex justify-between items-center">Q1 (Hourly) <span class="text-xs bg-white text-red-600 px-2 py-0.5 rounded-full" id="count-q1">0</span></h3>
+                                <div class="mt-2"><textarea id="input-q1" rows="2" placeholder="Paste names here..." class="w-full text-sm p-2 border border-red-200 rounded focus:ring-2 focus:ring-red-400 focus:outline-none resize-none" onkeydown="handlePatientInput(event, 1)"></textarea></div>
                             </div>
                             <div class="flex-1 overflow-y-auto p-2 space-y-2 patient-list-scroll" id="list-q1"></div>
                         </div>
-
-                        <!-- Q2 Column -->
                         <div class="bg-orange-50 border border-orange-200 rounded-lg flex flex-col h-80">
                             <div class="p-3 bg-orange-100 border-b border-orange-200 rounded-t-lg">
-                                <h3 class="font-bold text-orange-800 flex justify-between items-center">
-                                    Q2 (Every 2h)
-                                    <span class="text-xs bg-white text-orange-600 px-2 py-0.5 rounded-full" id="count-q2">0</span>
-                                </h3>
-                                <div class="mt-2">
-                                    <textarea id="input-q2" rows="2" placeholder="Paste names here...&#10;Press Enter to add" class="w-full text-sm p-2 border border-orange-200 rounded focus:ring-2 focus:ring-orange-400 focus:outline-none resize-none" onkeydown="handlePatientInput(event, 2)"></textarea>
-                                </div>
+                                <h3 class="font-bold text-orange-800 flex justify-between items-center">Q2 (Every 2h) <span class="text-xs bg-white text-orange-600 px-2 py-0.5 rounded-full" id="count-q2">0</span></h3>
+                                <div class="mt-2"><textarea id="input-q2" rows="2" placeholder="Paste names here..." class="w-full text-sm p-2 border border-orange-200 rounded focus:ring-2 focus:ring-orange-400 focus:outline-none resize-none" onkeydown="handlePatientInput(event, 2)"></textarea></div>
                             </div>
                             <div class="flex-1 overflow-y-auto p-2 space-y-2 patient-list-scroll" id="list-q2"></div>
                         </div>
-
-                        <!-- Q4 Column -->
                         <div class="bg-blue-50 border border-blue-200 rounded-lg flex flex-col h-80">
                             <div class="p-3 bg-blue-100 border-b border-blue-200 rounded-t-lg">
-                                <h3 class="font-bold text-blue-800 flex justify-between items-center">
-                                    Q4 (Every 4h)
-                                    <span class="text-xs bg-white text-blue-600 px-2 py-0.5 rounded-full" id="count-q4">0</span>
-                                </h3>
-                                <div class="mt-2">
-                                    <textarea id="input-q4" rows="2" placeholder="Paste names here...&#10;Press Enter to add" class="w-full text-sm p-2 border border-blue-200 rounded focus:ring-2 focus:ring-blue-400 focus:outline-none resize-none" onkeydown="handlePatientInput(event, 4)"></textarea>
-                                </div>
+                                <h3 class="font-bold text-blue-800 flex justify-between items-center">Q4 (Every 4h) <span class="text-xs bg-white text-blue-600 px-2 py-0.5 rounded-full" id="count-q4">0</span></h3>
+                                <div class="mt-2"><textarea id="input-q4" rows="2" placeholder="Paste names here..." class="w-full text-sm p-2 border border-blue-200 rounded focus:ring-2 focus:ring-blue-400 focus:outline-none resize-none" onkeydown="handlePatientInput(event, 4)"></textarea></div>
                             </div>
                             <div class="flex-1 overflow-y-auto p-2 space-y-2 patient-list-scroll" id="list-q4"></div>
                         </div>
-
-                        <!-- Q8 Column -->
                         <div class="bg-green-50 border border-green-200 rounded-lg flex flex-col h-80">
                             <div class="p-3 bg-green-100 border-b border-green-200 rounded-t-lg">
-                                <h3 class="font-bold text-green-800 flex justify-between items-center">
-                                    Q8 (Every 8h)
-                                    <span class="text-xs bg-white text-green-600 px-2 py-0.5 rounded-full" id="count-q8">0</span>
-                                </h3>
-                                <div class="mt-2">
-                                    <textarea id="input-q8" rows="2" placeholder="Paste names here...&#10;Press Enter to add" class="w-full text-sm p-2 border border-green-200 rounded focus:ring-2 focus:ring-green-400 focus:outline-none resize-none" onkeydown="handlePatientInput(event, 8)"></textarea>
-                                </div>
+                                <h3 class="font-bold text-green-800 flex justify-between items-center">Q8 (Every 8h) <span class="text-xs bg-white text-green-600 px-2 py-0.5 rounded-full" id="count-q8">0</span></h3>
+                                <div class="mt-2"><textarea id="input-q8" rows="2" placeholder="Paste names here..." class="w-full text-sm p-2 border border-green-200 rounded focus:ring-2 focus:ring-green-400 focus:outline-none resize-none" onkeydown="handlePatientInput(event, 8)"></textarea></div>
                             </div>
                             <div class="flex-1 overflow-y-auto p-2 space-y-2 patient-list-scroll" id="list-q8"></div>
                         </div>
-
                     </div>
                 </div>
 
-                <!-- Step 4: Locations (UPDATED DEFAULT ORDER) -->
                 <div class="card p-5 border-l-4 border-indigo-500">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-xl font-bold text-slate-700">4. Patient Locations</h2>
                         <div class="flex gap-2">
                             <input type="text" id="newLocInput" placeholder="New Location..." class="border border-slate-300 rounded text-xs px-2 py-1 focus:ring-2 focus:ring-indigo-300 outline-none" onkeydown="if(event.key === 'Enter') addNewLocation()">
-                            <button onclick="addNewLocation()" class="bg-indigo-600 text-white text-xs px-3 py-1.5 rounded hover:bg-indigo-700 whitespace-nowrap">
-                                <i class="fa-solid fa-plus"></i>
-                            </button>
+                            <button onclick="addNewLocation()" class="bg-indigo-600 text-white text-xs px-3 py-1.5 rounded hover:bg-indigo-700 whitespace-nowrap"><i class="fa-solid fa-plus"></i></button>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4" id="locationGrid">
-                        <!-- Dynamic Location Cards -->
-                    </div>
-                    <p class="text-xs text-slate-400 mt-2 italic">* Paste existing patient names to assign locations. Patients must be added in Step 3 first.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4" id="locationGrid"></div>
+                    <p class="text-xs text-slate-400 mt-2 italic">* Paste existing patient names to assign locations.</p>
                 </div>
-
             </div>
         </div>
 
-        <!-- ACTIONS BUTTONS -->
         <div class="flex flex-col md:flex-row justify-center items-center gap-4 my-8">
-            <button onclick="copyInputs()" class="bg-white text-slate-600 border border-slate-300 text-lg font-bold py-3 px-8 rounded-full shadow-sm hover:bg-slate-50 transform transition hover:scale-105 active:scale-95">
-                <i class="fa-solid fa-clipboard-list mr-2"></i> Copy Inputs
-            </button>
-            <button onclick="calculateDistribution()" class="bg-slate-800 text-white text-xl font-bold py-3 px-12 rounded-full shadow-lg hover:bg-slate-900 transform transition hover:scale-105 active:scale-95">
-                <i class="fa-solid fa-calculator mr-2"></i> Generate Schedule
-            </button>
+            <button onclick="copyInputs()" class="bg-white text-slate-600 border border-slate-300 text-lg font-bold py-3 px-8 rounded-full shadow-sm hover:bg-slate-50 transform transition hover:scale-105 active:scale-95"><i class="fa-solid fa-clipboard-list mr-2"></i> Copy Inputs</button>
+            <button onclick="calculateDistribution()" class="bg-slate-800 text-white text-xl font-bold py-3 px-12 rounded-full shadow-lg hover:bg-slate-900 transform transition hover:scale-105 active:scale-95"><i class="fa-solid fa-calculator mr-2"></i> Generate Schedule</button>
         </div>
 
-        <!-- RESULTS SECTION -->
         <div id="resultsSection" class="hidden animate-fade-in pb-10">
             <div class="flex flex-col md:flex-row justify-between items-end border-b pb-4 mb-6">
                 <h2 class="text-2xl font-bold text-slate-800">Generation Results</h2>
-                
                 <div class="flex flex-wrap bg-slate-200 p-1 rounded-lg mt-4 md:mt-0 gap-1 items-center">
-                    <button onclick="switchView('card')" id="btnViewCard" class="px-4 py-1.5 rounded-md text-sm font-semibold shadow-sm bg-white text-slate-800 transition">
-                        <i class="fa-solid fa-user-doctor mr-1"></i> Cards
-                    </button>
-                     <button onclick="switchView('table')" id="btnViewTable" class="px-4 py-1.5 rounded-md text-sm font-semibold text-slate-600 hover:text-slate-800 transition">
-                        <i class="fa-solid fa-table mr-1"></i> Table
-                    </button>
-                    <button onclick="switchView('timeline')" id="btnViewTimeline" class="px-4 py-1.5 rounded-md text-sm font-semibold text-slate-600 hover:text-slate-800 transition">
-                        <i class="fa-regular fa-clock mr-1"></i> Timeline
-                    </button>
-                    <!-- COPY BUTTON -->
+                    <button onclick="switchView('card')" id="btnViewCard" class="px-4 py-1.5 rounded-md text-sm font-semibold shadow-sm bg-white text-slate-800 transition"><i class="fa-solid fa-user-doctor mr-1"></i> Cards</button>
+                    <button onclick="switchView('table')" id="btnViewTable" class="px-4 py-1.5 rounded-md text-sm font-semibold text-slate-600 hover:text-slate-800 transition"><i class="fa-solid fa-table mr-1"></i> Table</button>
+                    <button onclick="switchView('timeline')" id="btnViewTimeline" class="px-4 py-1.5 rounded-md text-sm font-semibold text-slate-600 hover:text-slate-800 transition"><i class="fa-regular fa-clock mr-1"></i> Timeline</button>
                     <div class="h-6 w-px bg-slate-300 mx-1"></div>
-                    <button onclick="copyCurrentOutput()" class="px-3 py-1.5 rounded-md text-sm font-bold text-indigo-600 hover:bg-indigo-50 transition border border-indigo-200">
-                        <i class="fa-solid fa-copy mr-1"></i> Copy Output
-                    </button>
+                    <button onclick="copyCurrentOutput()" class="px-3 py-1.5 rounded-md text-sm font-bold text-indigo-600 hover:bg-indigo-50 transition border border-indigo-200"><i class="fa-solid fa-copy mr-1"></i> Copy Output</button>
                 </div>
             </div>
             
-            <!-- Summary Metrics -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                  <div class="bg-white p-4 rounded shadow border-l-4 border-yellow-400">
-                     <div class="text-slate-500 text-sm">Avg Checks per Doctor</div>
+                     <div class="text-slate-500 text-sm">Avg Checks per Avail Hr</div>
                      <div class="text-2xl font-bold" id="avgLoadDisplay">-</div>
                  </div>
                  <div class="bg-white p-4 rounded shadow border-l-4 border-red-400">
-                    <div class="text-slate-500 text-sm">Highest Workload</div>
+                    <div class="text-slate-500 text-sm">Highest Active Checks</div>
                     <div class="text-2xl font-bold" id="maxLoadDisplay">-</div>
                 </div>
                 <div class="bg-white p-4 rounded shadow border-l-4 border-green-400">
-                    <div class="text-slate-500 text-sm">Lowest Workload</div>
+                    <div class="text-slate-500 text-sm">Lowest Active Checks</div>
                     <div class="text-2xl font-bold" id="minLoadDisplay">-</div>
                 </div>
             </div>
 
-            <!-- VIEW 1: Doctor Cards -->
-            <div id="viewCardContainer">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="assignmentGrid"></div>
-            </div>
-
-            <!-- VIEW 2: Table Summary -->
+            <div id="viewCardContainer"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="assignmentGrid"></div></div>
             <div id="viewTableContainer" class="hidden">
                 <div class="bg-white rounded-lg shadow overflow-hidden border border-slate-200">
                     <div class="overflow-x-auto">
@@ -291,11 +211,12 @@
                             <thead class="text-xs text-slate-700 uppercase bg-slate-50 border-b">
                                 <tr>
                                     <th class="px-6 py-3 font-bold">Doctor</th>
-                                    <th class="px-6 py-3 text-red-600 bg-red-50">Q1 Count</th>
-                                    <th class="px-6 py-3 text-orange-600 bg-orange-50">Q2 Count</th>
-                                    <th class="px-6 py-3 text-blue-600 bg-blue-50">Q4 Count</th>
-                                    <th class="px-6 py-3 text-green-600 bg-green-50">Q8 Count</th>
-                                    <th class="px-6 py-3 font-bold text-slate-800 bg-slate-100 text-right">Total Checks</th>
+                                    <th class="px-6 py-3 text-red-600 bg-red-50">Q1</th>
+                                    <th class="px-6 py-3 text-orange-600 bg-orange-50">Q2</th>
+                                    <th class="px-6 py-3 text-blue-600 bg-blue-50">Q4</th>
+                                    <th class="px-6 py-3 text-green-600 bg-green-50">Q8</th>
+                                    <th class="px-6 py-3 font-bold text-slate-800 bg-slate-100 text-right">Active / Burden</th>
+                                    <th class="px-6 py-3 font-bold text-slate-800 bg-slate-100 text-right">Avail Hrs</th>
                                 </tr>
                             </thead>
                             <tbody id="summaryTableBody" class="divide-y divide-slate-100"></tbody>
@@ -303,19 +224,12 @@
                     </div>
                 </div>
             </div>
-
-            <!-- VIEW 3: Timeline -->
             <div id="viewTimelineContainer" class="hidden">
-                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-                    <div id="timelineContent" class="space-y-0 relative timeline-line"></div>
-                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200"><div id="timelineContent" class="space-y-0 relative timeline-line"></div></div>
             </div>
-
         </div>
-
     </div>
 
-    <!-- Import Modal -->
     <div id="importModal" class="fixed inset-0 hidden items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-2xl mx-4">
             <h2 class="text-xl font-bold mb-4 text-slate-800">Import Configuration</h2>
@@ -328,10 +242,8 @@
         </div>
     </div>
 
-    <!-- Toast Notification -->
     <div id="toast">Copied to clipboard!</div>
 
-    <!-- JAVASCRIPT LOGIC -->
     <script>
         // --- DATA STATE ---
         let doctors = [];
@@ -347,8 +259,8 @@
         let shiftHours = 12;
         let q8Offset = 0; 
         
-        // Store current assignment & view for copy logic
         let currentAssignment = null;
+        let currentSchedule = null; // Store simulated schedule
         let currentView = 'card';
 
         // --- DOM ELEMENTS ---
@@ -361,6 +273,21 @@
         document.getElementById('q8Offset').addEventListener('change', updateDuration);
         updateDuration();
         renderLocations();
+
+        // --- HELPER: TIME MATH ---
+        function timeToMinutes(timeStr) {
+            const parts = timeStr.split(':');
+            return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        }
+
+        // Returns {start: mins, end: mins} normalized to start of shift = 0
+        function normalizeToShift(tStr, shiftStartMins) {
+            let tMins = timeToMinutes(tStr);
+            if (tMins < shiftStartMins) {
+                tMins += 24 * 60;
+            }
+            return tMins - shiftStartMins;
+        }
 
         // --- IMPORT FUNCTIONALITY ---
         function toggleImportModal() {
@@ -377,7 +304,7 @@
             if(!text) return;
 
             try {
-                // 1. Reset State
+                // Reset State
                 doctors = [];
                 patients = [];
                 locations = [];
@@ -389,7 +316,6 @@
                 for (let line of lines) {
                     if(!line) continue;
 
-                    // Parse Metadata
                     if (line.startsWith('Shift:')) {
                         const parts = line.match(/Shift: (.*) to (.*)/);
                         if(parts) {
@@ -400,52 +326,50 @@
                     else if (line.startsWith('Q8 Offset:')) {
                         const parts = line.match(/\+(\d+)/);
                         if(parts) {
-                            const val = parts[1];
-                            document.getElementById('q8Offset').value = val;
+                            document.getElementById('q8Offset').value = parts[1];
                         }
                     }
-                    
-                    // Detect Section Headers
                     else if (line.startsWith('DOCTORS')) { currentSection = 'doctors'; }
                     else if (line.startsWith('LOCATIONS')) { currentSection = 'locations'; }
                     else if (line.startsWith('PATIENT LIST')) { currentSection = 'patients'; }
                     else if (line.match(/^\[Q\d\]/)) {
                         currentQ = parseInt(line.replace(/\D/g, ''));
                     }
-
-                    // Parse List Items
                     else if (line.startsWith('- ')) {
                         const content = line.substring(2).trim();
                         
                         if (currentSection === 'doctors') {
-                            doctors.push(content);
+                            const parts = content.match(/^(.*?)(\s\[(.*)\])?$/);
+                            if (parts) {
+                                const dName = parts[1].trim();
+                                let dRanges = [];
+                                if (parts[3]) {
+                                    const rangesStr = parts[3].split(',');
+                                    rangesStr.forEach(r => {
+                                        const times = r.trim().split('-');
+                                        if(times.length === 2) dRanges.push({start: times[0].trim(), end: times[1].trim()});
+                                    });
+                                }
+                                doctors.push({ id: Date.now() + Math.random(), name: dName, ranges: dRanges });
+                            }
                         }
                         else if (currentSection === 'locations') {
                             locations.push({ id: Date.now() + Math.random(), name: content });
                         }
                         else if (currentSection === 'patients' && currentQ > 0) {
-                            // Format: Name (Location, Pref: Doc)
-                            // Regex breakdown: 
-                            // ^(.*?): Name
-                            // (?:\s*\((.*)\))?$: Optional parens group for details
                             const match = content.match(/^(.*?)(?:\s*\((.*)\))?$/);
                             if(match) {
                                 const pName = match[1];
                                 const details = match[2];
                                 let pLoc = "";
                                 let pPref = "";
-
                                 if (details) {
                                     const detailParts = details.split(',').map(s => s.trim());
                                     detailParts.forEach(d => {
-                                        if(d.startsWith('Pref:')) {
-                                            pPref = d.replace('Pref:', '').trim();
-                                        } else {
-                                            pLoc = d;
-                                        }
+                                        if(d.startsWith('Pref:')) pPref = d.replace('Pref:', '').trim();
+                                        else pLoc = d;
                                     });
                                 }
-
                                 patients.push({
                                     id: Date.now() + Math.random(),
                                     name: pName,
@@ -457,13 +381,10 @@
                         }
                     }
                 }
-
-                // Refresh UI
                 updateDuration();
                 renderAll();
                 toggleImportModal();
                 showToast("Configuration Loaded!");
-
             } catch (e) {
                 console.error(e);
                 alert("Error parsing text. Please ensure it matches the 'Copy Inputs' format.");
@@ -476,11 +397,13 @@
             const end = document.getElementById('endTime').value;
             q8Offset = parseInt(document.getElementById('q8Offset').value);
 
-            let sDate = new Date(`01/01/2000 ${start}`);
-            let eDate = new Date(`01/01/2000 ${end}`);
-            if (eDate <= sDate) eDate.setDate(eDate.getDate() + 1);
-            const diffMs = eDate - sDate;
-            shiftHours = diffMs / 1000 / 60 / 60;
+            let sMins = timeToMinutes(start);
+            let eMins = timeToMinutes(end);
+            
+            if (eMins <= sMins) eMins += 24 * 60;
+            
+            const diffMins = eMins - sMins;
+            shiftHours = diffMins / 60;
             
             document.getElementById('durationDisplay').innerText = `Duration: ${shiftHours.toFixed(1)} Hours`;
 
@@ -495,16 +418,35 @@
             const nameInput = document.getElementById('newDocName');
             const name = nameInput.value.trim();
             if (!name) return;
-            if (doctors.includes(name)) { alert('Doctor already exists!'); return; }
-            doctors.push(name);
+            if (doctors.find(d => d.name === name)) { alert('Doctor already exists!'); return; }
+            doctors.push({ id: Date.now(), name: name, ranges: [] });
             nameInput.value = '';
             renderAll();
         }
 
         function removeDoctor(name) {
-            doctors = doctors.filter(d => d !== name);
+            doctors = doctors.filter(d => d.name !== name);
             patients.forEach(p => { if (p.pref === name) p.pref = ""; });
             renderAll();
+        }
+
+        function addRange(docId) {
+            const sVal = document.getElementById(`start-${docId}`).value;
+            const eVal = document.getElementById(`end-${docId}`).value;
+            if(!sVal || !eVal) return;
+            const doc = doctors.find(d => d.id === docId);
+            if(doc) {
+                doc.ranges.push({start: sVal, end: eVal});
+                renderDoctors();
+            }
+        }
+
+        function removeRange(docId, index) {
+            const doc = doctors.find(d => d.id === docId);
+            if(doc) {
+                doc.ranges.splice(index, 1);
+                renderDoctors();
+            }
         }
 
         // --- LOCATION MANAGEMENT ---
@@ -549,9 +491,8 @@
                             matchCount++;
                         }
                     });
-
                     if(matchCount === 0) {
-                        alert("No matching patients found in Step 3. Please ensure names match exactly.");
+                        alert("No matching patients found. Ensure exact name match.");
                     } else {
                         renderAll(); 
                         input.value = '';
@@ -624,7 +565,7 @@
             if(p) { p.pref = ""; renderAll(); }
         }
 
-        // --- RENDERING DOCTORS & PATIENTS ---
+        // --- RENDERING ---
         function renderAll() {
             renderDoctors();
             renderPatientLists();
@@ -634,21 +575,31 @@
         function renderDoctors() {
             docListEl.innerHTML = '';
             doctors.forEach((d, index) => {
-                const prefs = patients.filter(p => p.pref === d);
-                
+                const prefs = patients.filter(p => p.pref === d.name);
                 const card = document.createElement('div');
                 card.className = "bg-white border rounded shadow-sm text-sm overflow-hidden transition-all";
-                
                 const header = document.createElement('div');
                 header.className = "p-3 flex justify-between items-center bg-slate-50 cursor-pointer hover:bg-slate-100";
-                header.onclick = () => toggleDocAccordion(index);
+                
+                let rangeText = "";
+                if(d.ranges.length > 0) {
+                    rangeText = `<span class="text-xs text-green-600 bg-green-50 border border-green-200 rounded px-1 ml-1">${d.ranges.length} Ranges</span>`;
+                }
+
+                header.onclick = (e) => {
+                    if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON' && !e.target.closest('button')) 
+                        toggleDocAccordion(index);
+                };
+
                 header.innerHTML = `
                     <div class="flex items-center gap-2 font-medium text-slate-700">
                         <i class="fa-solid fa-user-doctor text-slate-400"></i>
-                        ${d}
+                        ${d.name}
                         ${prefs.length > 0 ? `<span class="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full">${prefs.length}</span>` : ''}
+                        ${rangeText}
                     </div>
                     <div class="flex items-center gap-3">
+                        <button onclick="toggleDocAccordion(${index}); event.stopPropagation();" class="text-slate-400 hover:text-blue-500" title="Set Availability"><i class="fa-regular fa-clock"></i></button>
                         <i id="arrow-${index}" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"></i>
                     </div>
                 `;
@@ -664,20 +615,32 @@
                     </span>
                 `).join('');
 
+                let rangesHtml = d.ranges.map((r, i) => `
+                    <div class="flex justify-between text-xs bg-slate-50 p-1 rounded border mb-1">
+                        <span>${r.start} - ${r.end}</span>
+                        <button onclick="removeRange(${d.id}, ${i})" class="text-red-400 hover:text-red-600 px-1">&times;</button>
+                    </div>
+                `).join('');
+
                 body.innerHTML = `
-                    <div class="p-3 space-y-2">
-                        <div class="flex flex-wrap gap-1">
-                            ${prefsHtml || '<span class="text-xs text-slate-400 italic">No preferred patients.</span>'}
+                    <div class="p-3 space-y-4">
+                        <div class="bg-blue-50 p-2 rounded border border-blue-100">
+                            <div class="text-[10px] uppercase font-bold text-blue-500 mb-1">Availability (Default: Full Shift)</div>
+                            <div class="mb-2">${rangesHtml}</div>
+                            <div class="flex gap-1">
+                                <input type="time" id="start-${d.id}" class="w-1/2 p-1 text-xs border rounded">
+                                <input type="time" id="end-${d.id}" class="w-1/2 p-1 text-xs border rounded">
+                                <button onclick="addRange(${d.id})" class="bg-blue-500 text-white px-2 rounded text-xs"><i class="fa-solid fa-plus"></i></button>
+                            </div>
                         </div>
-                        <div class="pt-2 border-t border-slate-50 mt-2">
-                            <label class="text-[10px] uppercase font-bold text-slate-400">Bulk Add Preference</label>
-                            <textarea placeholder="Type existing patient names here..." rows="2" 
-                                class="w-full text-xs p-2 border rounded focus:ring-1 focus:ring-green-400 mt-1 resize-none"
-                                onkeydown="handleDocPrefInput(event, '${d}')"></textarea>
+                        <div>
+                            <div class="text-[10px] uppercase font-bold text-slate-400 mb-1">Preferred Patients</div>
+                            <div class="flex flex-wrap gap-1">
+                                ${prefsHtml || '<span class="text-xs text-slate-400 italic">None</span>'}
+                            </div>
+                            <textarea placeholder="Bulk add pref names..." rows="2" class="w-full text-xs p-2 border rounded focus:ring-1 focus:ring-green-400 mt-1 resize-none" onkeydown="handleDocPrefInput(event, '${d.name}')"></textarea>
                         </div>
-                        <div class="text-right pt-2">
-                             <button onclick="removeDoctor('${d}')" class="text-xs text-red-400 hover:text-red-600 underline">Remove Doctor</button>
-                        </div>
+                        <div class="text-right pt-1"><button onclick="removeDoctor('${d.name}')" class="text-xs text-red-400 hover:text-red-600 underline">Remove Doctor</button></div>
                     </div>
                 `;
                 card.appendChild(header);
@@ -700,7 +663,7 @@
             }
         }
 
-        // --- PATIENT HANDLING (FREQ) ---
+        // --- PATIENT HANDLING ---
         function handlePatientInput(event, freq) {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
@@ -738,8 +701,8 @@
                 qPatients.forEach(p => {
                     let optionsHTML = `<option value="">No Pref</option>`;
                     doctors.forEach(d => {
-                        const selected = p.pref === d ? 'selected' : '';
-                        optionsHTML += `<option value="${d}" ${selected}>${d}</option>`;
+                        const selected = p.pref === d.name ? 'selected' : '';
+                        optionsHTML += `<option value="${d.name}" ${selected}>${d.name}</option>`;
                     });
                     
                     const borderClass = p.pref ? 'border-amber-300 bg-amber-50' : 'border-slate-200 bg-white';
@@ -766,96 +729,253 @@
             });
         }
 
-        function getCheckCount(freq, duration, offset = 0) {
+        // --- CORE ALGORITHM & CALCS ---
+        function isDoctorAvailableAtHour(doc, hourIndex) {
+            // Robust logic: use minute offsets from shift start
+            if (!doc.ranges || doc.ranges.length === 0) return true;
+
+            const shiftStartStr = document.getElementById('startTime').value;
+            const shiftStartMins = timeToMinutes(shiftStartStr);
+            
+            // Check middle of the hour
+            const checkMinute = (hourIndex * 60) + 30; 
+
+            for(let r of doc.ranges) {
+                let startOffset = normalizeToShift(r.start, shiftStartMins);
+                let endOffset = normalizeToShift(r.end, shiftStartMins);
+                
+                // Handle case where range ends next day but user typed "02:00" and logic normalized it
+                if (endOffset < startOffset) endOffset += 24*60; 
+
+                if (checkMinute >= startOffset && checkMinute < endOffset) return true;
+            }
+            return false;
+        }
+
+        function getDoctorAvailableHours(doc) {
+            if (!doc.ranges || doc.ranges.length === 0) return shiftHours;
+            
+            const shiftStartStr = document.getElementById('startTime').value;
+            const shiftStartMins = timeToMinutes(shiftStartStr);
+            let totalMins = 0;
+
+            doc.ranges.forEach(r => {
+                let startOffset = normalizeToShift(r.start, shiftStartMins);
+                let endOffset = normalizeToShift(r.end, shiftStartMins);
+                if (endOffset <= startOffset) endOffset += 24*60;
+                totalMins += (endOffset - startOffset);
+            });
+            return totalMins / 60;
+        }
+
+        function getCheckCountForDoc(patient, doc) {
+            // Calculates checks ONLY if doc is present
             let count = 0;
-            for (let h = 0; h < Math.ceil(duration); h++) {
-                if (freq === 8) {
-                    if (h >= offset && (h - offset) % freq === 0) count++;
+            const totalHoursInt = Math.ceil(shiftHours);
+            for (let h = 0; h < totalHoursInt; h++) {
+                let isDue = false;
+                if (patient.freq === 8) {
+                    if (h >= q8Offset && (h - q8Offset) % 8 === 0) isDue = true;
                 } else {
-                    if (h % freq === 0) count++;
+                    if (h % patient.freq === 0) isDue = true;
+                }
+
+                if (isDue && isDoctorAvailableAtHour(doc, h)) {
+                    count++;
                 }
             }
             return count;
         }
 
-        // --- ALGORITHM & DISTRIBUTION ---
+        function getBurden(patient) {
+            // Total checks needed by patient
+            let count = 0;
+            const totalHoursInt = Math.ceil(shiftHours);
+            for (let h = 0; h < totalHoursInt; h++) {
+                if (patient.freq === 8) {
+                    if (h >= q8Offset && (h - q8Offset) % 8 === 0) count++;
+                } else {
+                    if (h % patient.freq === 0) count++;
+                }
+            }
+            return count;
+        }
+
+        // --- NEW SIMULATION-BASED ASSIGNMENT ---
+        function simulateSchedule(assignment) {
+            // This function runs AFTER primary assignment to determine actual 'active' work (coverage)
+            const docKeys = Object.keys(assignment);
+            const totalHoursInt = Math.ceil(shiftHours);
+            
+            // Temporary trackers for the simulation
+            let simStats = {};
+            docKeys.forEach(k => {
+                simStats[k] = { active: 0, hourlyLoad: new Array(totalHoursInt).fill(0) };
+            });
+
+            // Flatten all tasks
+            let allTasks = [];
+            Object.values(assignment).forEach(primaryDoc => {
+                primaryDoc.patients.forEach(p => {
+                    for (let h = 0; h < totalHoursInt; h++) {
+                        let isDue = false;
+                        if (p.freq === 8) { if (h >= q8Offset && (h - q8Offset) % 8 === 0) isDue = true; }
+                        else { if (h % p.freq === 0) isDue = true; }
+                        
+                        if(isDue) {
+                            allTasks.push({ patient: p, primaryDoc: primaryDoc, hour: h });
+                        }
+                    }
+                });
+            });
+
+            // Sort tasks to prioritize earlier hours (not strictly needed but good for sequence)
+            allTasks.sort((a,b) => a.hour - b.hour);
+
+            let hourlyPlan = []; // For timeline
+
+            // Process hour by hour
+            for (let h = 0; h < totalHoursInt; h++) {
+                let hourTasks = allTasks.filter(t => t.hour === h);
+                let hourAssignments = {};
+                
+                // Identify needed coverage
+                let pending = [];
+                
+                hourTasks.forEach(t => {
+                    // Try Primary
+                    if (isDoctorAvailableAtHour(t.primaryDoc, h)) {
+                        simStats[t.primaryDoc.name].active++;
+                        simStats[t.primaryDoc.name].hourlyLoad[h]++;
+                        
+                        if(!hourAssignments[t.primaryDoc.name]) hourAssignments[t.primaryDoc.name] = [];
+                        hourAssignments[t.primaryDoc.name].push({ ...t, isCoverage: false });
+                    } else {
+                        pending.push(t);
+                    }
+                });
+
+                // Assign Coverage
+                pending.forEach(t => {
+                    let availableDocs = docKeys.filter(name => isDoctorAvailableAtHour(assignment[name], h));
+                    
+                    if (availableDocs.length === 0) {
+                        // Unassigned
+                        let key = "UNASSIGNED";
+                        if(!hourAssignments[key]) hourAssignments[key] = [];
+                        hourAssignments[key].push({ ...t, isCoverage: false, unassigned: true });
+                    } else {
+                        // Pick available doc with lowest TOTAL active load so far to ensure equity
+                        availableDocs.sort((a,b) => simStats[a].active - simStats[b].active);
+                        let coverDocName = availableDocs[0];
+                        
+                        simStats[coverDocName].active++;
+                        simStats[coverDocName].hourlyLoad[h]++;
+                        
+                        if(!hourAssignments[coverDocName]) hourAssignments[coverDocName] = [];
+                        hourAssignments[coverDocName].push({ ...t, isCoverage: true });
+                    }
+                });
+                
+                hourlyPlan.push(hourAssignments);
+            }
+
+            return { stats: simStats, schedule: hourlyPlan };
+        }
+
         function calculateDistribution() {
-            if (doctors.length === 0) { alert("Please add at least one doctor."); return; }
+            if (doctors.length === 0) { alert("Please add doctors."); return; }
             if (patients.length === 0) { alert("Please add patients."); return; }
 
-            let assignment = {};
-            doctors.forEach(d => { assignment[d] = { name: d, patients: [], load: 0 }; });
+            // Init
+            doctors.forEach(d => { 
+                d.availHours = getDoctorAvailableHours(d); 
+            });
 
+            let assignment = {};
+            doctors.forEach(d => { 
+                assignment[d.name] = { 
+                    ...d, 
+                    patients: [], 
+                    activeLoad: 0, 
+                    burdenLoad: 0 
+                }; 
+            });
+
+            // 1. Assign Primary (Burden Distribution)
             let unassigned = [];
             patients.forEach(p => {
-                const weight = getCheckCount(p.freq, shiftHours, q8Offset);
                 if (p.pref && assignment[p.pref]) {
-                    assignment[p.pref].patients.push(p);
-                    assignment[p.pref].load += weight;
+                    const t = assignment[p.pref];
+                    t.patients.push(p);
+                    t.burdenLoad += getBurden(p);
                 } else {
                     unassigned.push(p);
                 }
             });
 
-            unassigned = unassigned.sort(() => Math.random() - 0.5);
-            unassigned.sort((a, b) => {
-                const wA = getCheckCount(a.freq, shiftHours, q8Offset);
-                const wB = getCheckCount(b.freq, shiftHours, q8Offset);
-                return wB - wA;
-            });
+            unassigned.sort(() => Math.random() - 0.5);
+            unassigned.sort((a, b) => getBurden(b) - getBurden(a));
 
             unassigned.forEach(p => {
-                const weight = getCheckCount(p.freq, shiftHours, q8Offset);
+                // Heuristic: Balance by Burden / AvailHours ratio
                 let docObjects = Object.values(assignment);
-                docObjects.sort((a, b) => a.load - b.load);
-                let targetDoc = docObjects[0];
-                targetDoc.patients.push(p);
-                targetDoc.load += weight;
+                docObjects.sort((a, b) => {
+                    let ratioA = a.availHours > 0 ? a.burdenLoad / a.availHours : 9999;
+                    let ratioB = b.availHours > 0 ? b.burdenLoad / b.availHours : 9999;
+                    return ratioA - ratioB;
+                });
+                
+                let target = docObjects[0];
+                target.patients.push(p);
+                target.burdenLoad += getBurden(p);
             });
 
+            // 2. Simulate to get True Active Load (inc. coverage)
+            const simulation = simulateSchedule(assignment);
+            
+            // Update Assignment with Real Stats
+            Object.keys(assignment).forEach(k => {
+                assignment[k].activeLoad = simulation.stats[k].active;
+            });
+            
             currentAssignment = assignment;
+            currentSchedule = simulation.schedule; // Store for timeline
+
             renderResults(assignment);
             renderSummaryTable(assignment);
-            renderTimeline(assignment);
+            renderTimeline(assignment); // Pass assignment, but uses global currentSchedule
             
             document.getElementById('resultsSection').classList.remove('hidden');
             document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // --- VISUALIZATION LOGIC ---
+        // --- VIEW RENDERING ---
         function renderResults(assignment) {
             const container = document.getElementById('assignmentGrid');
             container.innerHTML = '';
 
             const docs = Object.values(assignment);
-            const loads = docs.map(d => d.load);
-            const avg = (loads.reduce((a,b)=>a+b, 0) / loads.length).toFixed(1);
+            const activeLoads = docs.map(d => d.activeLoad);
+            const totalActive = activeLoads.reduce((a,b)=>a+b, 0);
+            const totalHours = docs.reduce((a,b)=>a+b.availHours, 0);
+            const avgPerHr = totalHours > 0 ? (totalActive / totalHours).toFixed(2) : 0;
 
-            document.getElementById('avgLoadDisplay').innerText = avg;
-            document.getElementById('maxLoadDisplay').innerText = Math.max(...loads);
-            document.getElementById('minLoadDisplay').innerText = Math.min(...loads);
+            document.getElementById('avgLoadDisplay').innerText = avgPerHr;
+            document.getElementById('maxLoadDisplay').innerText = Math.max(...activeLoads);
+            document.getElementById('minLoadDisplay').innerText = Math.min(...activeLoads);
 
             docs.forEach(d => {
-                const isOverloaded = d.load > (parseFloat(avg) * 1.2); 
-                const borderColor = isOverloaded ? 'border-red-500' : 'border-blue-500';
-                
-                // Sort: Q (ASC), then Location (ASC), then Name (ASC)
                 d.patients.sort((a,b) => {
-                    // 1. Frequency (Q1 < Q2 < Q4 < Q8)
                     if (a.freq !== b.freq) return a.freq - b.freq;
-                    
-                    // 2. Location (Alphabetical)
-                    const locA = (a.location || "").trim().toLowerCase();
-                    const locB = (b.location || "").trim().toLowerCase();
+                    const locA = (a.location || "").toLowerCase();
+                    const locB = (b.location || "").toLowerCase();
                     if (locA !== locB) {
-                        // Put empty locations at the bottom
                         if (locA === "") return 1;
                         if (locB === "") return -1;
                         return locA.localeCompare(locB);
                     }
-
-                    // 3. Name (Alphabetical)
-                    return a.name.trim().localeCompare(b.name.trim(), undefined, {sensitivity: 'base'});
+                    return a.name.localeCompare(b.name);
                 });
 
                 let pListHTML = d.patients.map(p => `
@@ -872,13 +992,16 @@
                 `).join('');
 
                 const card = document.createElement('div');
-                card.className = `card p-5 border-t-8 ${borderColor} fade-in`;
+                card.className = `card p-5 border-t-8 border-blue-500 fade-in`;
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-4">
-                        <h3 class="text-xl font-bold text-slate-800">${d.name}</h3>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800">${d.name}</h3>
+                            <div class="text-xs text-slate-400">Available: ${d.availHours.toFixed(1)}h</div>
+                        </div>
                         <div class="text-right">
-                            <div class="text-2xl font-bold text-slate-700">${d.load}</div>
-                            <div class="text-xs text-slate-500 uppercase">Checks</div>
+                            <div class="text-xl font-bold text-slate-700">Act: ${d.activeLoad}</div>
+                            <div class="text-[10px] text-slate-400 uppercase">Burden: ${d.burdenLoad}</div>
                         </div>
                     </div>
                     <div class="space-y-1">
@@ -906,7 +1029,8 @@
                     <td class="px-6 py-4 bg-orange-50/50 font-mono text-orange-700 font-bold">${q2}</td>
                     <td class="px-6 py-4 bg-blue-50/50 font-mono text-blue-700 font-bold">${q4}</td>
                     <td class="px-6 py-4 bg-green-50/50 font-mono text-green-700 font-bold">${q8}</td>
-                    <td class="px-6 py-4 text-right font-bold text-lg bg-slate-50">${doc.load}</td>
+                    <td class="px-6 py-4 text-right font-bold text-lg bg-slate-50">${doc.activeLoad} <span class="text-xs font-normal text-slate-400">/ ${doc.burdenLoad}</span></td>
+                    <td class="px-6 py-4 text-right text-slate-500">${doc.availHours.toFixed(1)}h</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -917,82 +1041,63 @@
             container.innerHTML = '';
             
             const sTimeStr = document.getElementById('startTime').value;
-            let startHour = parseInt(sTimeStr.split(':')[0]);
+            const startHour = parseInt(sTimeStr.split(':')[0]);
             const startMin = sTimeStr.split(':')[1];
             
-            let allAssigned = [];
-            Object.values(assignment).forEach(doc => {
-                doc.patients.forEach(p => {
-                    allAssigned.push({ ...p, docName: doc.name });
-                });
-            });
+            // Use PRE-CALCULATED Schedule
+            if (!currentSchedule) return;
 
-            const totalHoursInt = Math.ceil(shiftHours);
-            
-            for (let i = 0; i < totalHoursInt; i++) {
+            currentSchedule.forEach((hourAssignments, i) => {
                 let currentH = (startHour + i) % 24;
                 let ampm = currentH >= 12 ? 'PM' : 'AM';
                 let displayH = currentH % 12;
                 if(displayH === 0) displayH = 12;
                 
-                let duePatients = [];
-                allAssigned.forEach(p => {
-                    if (p.freq === 8) {
-                        if (i >= q8Offset && (i - q8Offset) % 8 === 0) duePatients.push(p);
-                    } else {
-                        if (i % p.freq === 0) duePatients.push(p);
-                    }
-                });
-                
-                let groupedByDoc = {};
-                duePatients.forEach(p => {
-                    if(!groupedByDoc[p.docName]) groupedByDoc[p.docName] = [];
-                    groupedByDoc[p.docName].push(p);
-                });
-
                 const hourBlock = document.createElement('div');
                 hourBlock.className = "pl-8 pb-8 relative";
-                
                 hourBlock.innerHTML = `
                     <div class="absolute left-[6px] top-1 w-5 h-5 bg-slate-400 rounded-full border-4 border-white z-10 shadow-sm"></div>
                     <h3 class="font-bold text-lg text-slate-700 mb-3">${displayH}:${startMin} ${ampm}</h3>
                 `;
 
-                if(duePatients.length === 0) {
+                // Check for emptiness
+                if (Object.keys(hourAssignments).length === 0) {
                     hourBlock.innerHTML += `<div class="text-slate-400 italic text-sm">No standard checks due.</div>`;
                 } else {
                     const grid = document.createElement('div');
                     grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3";
                     
-                    Object.keys(groupedByDoc).sort().forEach(docName => {
-                        const pats = groupedByDoc[docName];
-                        let locGroups = {};
-                        pats.forEach(p => {
-                            let loc = p.location || "Unspecified Location";
-                            if(!locGroups[loc]) locGroups[loc] = [];
-                            locGroups[loc].push(p);
-                        });
+                    Object.keys(hourAssignments).sort().forEach(docName => {
+                        const assignedTasks = hourAssignments[docName];
+                        let isUnassigned = (docName === "UNASSIGNED");
+                        let cardClass = isUnassigned ? "bg-red-100 border-red-300" : "bg-slate-50 border-slate-200";
+                        let headerColor = isUnassigned ? "text-red-700" : "text-slate-800";
 
-                        let sortedLocs = Object.keys(locGroups).sort((a,b) => {
-                             if(a === "Unspecified Location") return 1;
-                             if(b === "Unspecified Location") return -1;
-                             return a.localeCompare(b);
+                        // Group by Loc
+                        let locGroups = {};
+                        assignedTasks.forEach(t => {
+                            let loc = t.patient.location || "Unspecified";
+                            if(!locGroups[loc]) locGroups[loc] = [];
+                            locGroups[loc].push(t);
                         });
+                        let sortedLocs = Object.keys(locGroups).sort((a,b) => a.localeCompare(b));
 
                         let innerHTML = '';
                         sortedLocs.forEach(locName => {
-                            let locPats = locGroups[locName];
-                            locPats.sort((a,b) => a.freq - b.freq);
+                            let locTasks = locGroups[locName];
+                            locTasks.sort((a,b) => a.patient.freq - b.patient.freq);
                             
                             innerHTML += `
                                 <div class="mb-2 last:mb-0">
-                                    <div class="text-[10px] font-bold text-indigo-600 uppercase tracking-wide border-b border-indigo-100 mb-1">
-                                        ${locName}
-                                    </div>
-                                    ${locPats.map(p => `
+                                    <div class="text-[10px] font-bold text-indigo-600 uppercase border-b border-indigo-100 mb-1">${locName}</div>
+                                    ${locTasks.map(t => `
                                         <div class="flex justify-between items-center text-xs py-1 border-b border-slate-50 last:border-0">
-                                            <span class="text-slate-700">${p.name}</span>
-                                            <span class="font-mono font-bold ${getQTextColor(p.freq)}">Q${p.freq}</span>
+                                            <div class="flex flex-col">
+                                                <span class="text-slate-700 font-medium">${t.patient.name}</span>
+                                                ${t.isCoverage ? `<span class="text-[9px] text-orange-600 font-bold">Covering (${t.primaryDoc.name})</span>` : ''}
+                                                ${t.unassigned ? `<span class="text-[9px] text-red-600 font-bold">Primary: ${t.primaryDoc.name}</span>` : ''}
+                                            </div>
+                                            <span class="font-mono font-bold ${getQTextColor(t.patient.freq)}">Q${t.patient.freq}</span>
                                         </div>
                                     `).join('')}
                                 </div>
@@ -1000,165 +1105,105 @@
                         });
 
                         const docCard = document.createElement('div');
-                        docCard.className = "bg-slate-50 border border-slate-200 rounded p-3 shadow-sm";
+                        docCard.className = `${cardClass} border rounded p-3 shadow-sm`;
                         docCard.innerHTML = `
-                            <div class="font-bold text-slate-800 text-sm mb-2 pb-1 border-b border-slate-200 flex justify-between">
-                                ${docName} <span class="bg-blue-100 text-blue-800 text-xs px-2 rounded-full">${pats.length}</span>
+                            <div class="font-bold ${headerColor} text-sm mb-2 pb-1 border-b border-slate-200 flex justify-between">
+                                <div>${docName} <span class="bg-white text-slate-600 text-xs px-2 rounded-full border">${assignedTasks.length}</span></div>
                             </div>
-                            <div class="space-y-0.5">
-                                ${innerHTML}
-                            </div>
+                            <div class="space-y-0.5">${innerHTML}</div>
                         `;
                         grid.appendChild(docCard);
                     });
                     hourBlock.appendChild(grid);
                 }
                 container.appendChild(hourBlock);
-            }
+            });
         }
 
-        // --- COPY OUTPUT FUNCTIONALITY ---
+        // --- COPY OUTPUT ---
         function copyCurrentOutput() {
-            if (!currentAssignment) {
-                showToast("Please generate a schedule first.");
-                return;
-            }
-
+            if (!currentAssignment || !currentSchedule) { showToast("Generate first."); return; }
             let textToCopy = "";
 
             if (currentView === 'card') {
                 textToCopy = "SHIFT ASSIGNMENTS\n=================\n\n";
                 Object.values(currentAssignment).forEach(d => {
-                    textToCopy += `${d.name} [Total Checks: ${d.load}]\n`;
-                    
-                    // Sort same as visual: Q -> Loc -> Name
+                    textToCopy += `${d.name} [Active: ${d.activeLoad}] [Burden: ${d.burdenLoad}] [Avail: ${d.availHours.toFixed(1)}h]\n`;
                     let sortedPatients = [...d.patients].sort((a,b) => {
-                        // 1. Frequency
                         if (a.freq !== b.freq) return a.freq - b.freq;
-                        
-                        // 2. Location
-                        const locA = (a.location || "").trim().toLowerCase();
-                        const locB = (b.location || "").trim().toLowerCase();
-                        if (locA !== locB) {
-                            if (locA === "") return 1;
-                            if (locB === "") return -1;
-                            return locA.localeCompare(locB);
-                        }
-
-                        // 3. Name
-                        return a.name.trim().localeCompare(b.name.trim(), undefined, {sensitivity: 'base'});
+                        const locA = (a.location || "").toLowerCase();
+                        const locB = (b.location || "").toLowerCase();
+                        if (locA !== locB) return locA.localeCompare(locB);
+                        return a.name.localeCompare(b.name);
                     });
-
                     sortedPatients.forEach(p => {
                         textToCopy += ` - ${p.name} (Q${p.freq}) ${p.location ? '['+p.location+']' : ''}\n`;
                     });
                     textToCopy += "\n";
                 });
-
             } else if (currentView === 'table') {
-                textToCopy = "SUMMARY TABLE\nDoctor\tQ1\tQ2\tQ4\tQ8\tTotal Checks\n";
+                textToCopy = "SUMMARY TABLE\nDoctor\tQ1\tQ2\tQ4\tQ8\tActive\tBurden\tAvail\n";
                 Object.values(currentAssignment).forEach(d => {
                     const q1 = d.patients.filter(p => p.freq === 1).length;
                     const q2 = d.patients.filter(p => p.freq === 2).length;
                     const q4 = d.patients.filter(p => p.freq === 4).length;
                     const q8 = d.patients.filter(p => p.freq === 8).length;
-                    textToCopy += `${d.name}\t${q1}\t${q2}\t${q4}\t${q8}\t${d.load}\n`;
+                    textToCopy += `${d.name}\t${q1}\t${q2}\t${q4}\t${q8}\t${d.activeLoad}\t${d.burdenLoad}\t${d.availHours.toFixed(1)}\n`;
                 });
-
             } else if (currentView === 'timeline') {
                 textToCopy = "TIMELINE SCHEDULE\n=================\n";
                 const sTimeStr = document.getElementById('startTime').value;
-                let startHour = parseInt(sTimeStr.split(':')[0]);
+                const startHour = parseInt(sTimeStr.split(':')[0]);
                 const startMin = sTimeStr.split(':')[1];
                 
-                const totalHoursInt = Math.ceil(shiftHours);
-                let allAssigned = [];
-                Object.values(currentAssignment).forEach(doc => {
-                    doc.patients.forEach(p => {
-                         allAssigned.push({ ...p, docName: doc.name });
-                    });
-                });
-
-                for (let i = 0; i < totalHoursInt; i++) {
+                currentSchedule.forEach((hourAssignments, i) => {
                     let currentH = (startHour + i) % 24;
                     let ampm = currentH >= 12 ? 'PM' : 'AM';
                     let displayH = currentH % 12;
                     if(displayH === 0) displayH = 12;
-                    
                     textToCopy += `\n[ ${displayH}:${startMin} ${ampm} ]\n`;
-                    
-                    let duePatients = [];
-                    allAssigned.forEach(p => {
-                        if (p.freq === 8) {
-                             if (i >= q8Offset && (i - q8Offset) % 8 === 0) duePatients.push(p);
-                        } else {
-                             if (i % p.freq === 0) duePatients.push(p);
-                        }
-                    });
 
-                    if(duePatients.length === 0) {
-                        textToCopy += " - No standard checks.\n";
-                    } else {
-                        // Group by Doc
-                        let grouped = {};
-                        duePatients.forEach(p => {
-                            if(!grouped[p.docName]) grouped[p.docName] = [];
-                            grouped[p.docName].push(p);
+                    Object.keys(hourAssignments).sort().forEach(docName => {
+                        const tasks = hourAssignments[docName];
+                        textToCopy += ` ${docName}:\n`;
+                        let sorted = tasks.sort((a,b) => {
+                             const locA = (a.patient.location || "").toLowerCase();
+                             const locB = (b.patient.location || "").toLowerCase();
+                             if (locA !== locB) return locA.localeCompare(locB);
+                             return a.patient.freq - b.patient.freq;
                         });
-                        Object.keys(grouped).sort().forEach(docName => {
-                            textToCopy += ` ${docName}:\n`;
-                            // Sort by Loc then Name
-                             let sorted = grouped[docName].sort((a,b) => {
-                                 const locA = (a.location || "").toLowerCase();
-                                 const locB = (b.location || "").toLowerCase();
-                                 if (locA !== locB) {
-                                    if (locA === "") return 1;
-                                    if (locB === "") return -1;
-                                    return locA.localeCompare(locB);
-                                 }
-                                 return a.name.localeCompare(b.name);
-                             });
-                             sorted.forEach(p => {
-                                 textToCopy += `   • ${p.name} (Q${p.freq}) ${p.location ? '- '+p.location : ''}\n`;
-                             });
+                        sorted.forEach(t => {
+                            let note = t.isCoverage ? ` [Covering ${t.primaryDoc.name}]` : "";
+                            if(t.unassigned) note = ` [PRIMARY ABSENT: ${t.primaryDoc.name}]`;
+                            textToCopy += `   • ${t.patient.name} (Q${t.patient.freq})${note}\n`;
                         });
-                    }
-                }
+                    });
+                });
             }
 
-            // Execute Copy
             const textarea = document.createElement('textarea');
             textarea.value = textToCopy;
             document.body.appendChild(textarea);
             textarea.select();
-            try {
-                document.execCommand('copy');
-                showToast("Copied to clipboard!");
-            } catch (err) {
-                console.error('Failed to copy', err);
-                showToast("Failed to copy");
-            }
+            try { document.execCommand('copy'); showToast("Copied to clipboard!"); } 
+            catch (err) { console.error('Failed to copy', err); showToast("Failed to copy"); }
             document.body.removeChild(textarea);
         }
 
-        // --- COPY ALL INPUTS FUNCTION ---
+        // --- COPY INPUTS ---
         function copyInputs() {
             const start = document.getElementById('startTime').value;
             const end = document.getElementById('endTime').value;
-            
             let text = `INPUT CONFIGURATION\n===================\n`;
-            text += `Shift: ${start} to ${end}\n`;
-            text += `Q8 Offset: +${q8Offset} Hours\n\n`;
-            
-            text += `DOCTORS\n`;
-            doctors.forEach(d => text += `- ${d}\n`);
-            text += `\n`;
-            
-            text += `LOCATIONS\n`;
+            text += `Shift: ${start} to ${end}\nQ8 Offset: +${q8Offset} Hours\n\nDOCTORS\n`;
+            doctors.forEach(d => {
+                let rangeStr = "";
+                if(d.ranges.length > 0) rangeStr = " [" + d.ranges.map(r => `${r.start}-${r.end}`).join(', ') + "]";
+                text += `- ${d.name}${rangeStr}\n`;
+            });
+            text += `\nLOCATIONS\n`;
             locations.forEach(l => text += `- ${l.name}\n`);
-            text += `\n`;
-            
-            text += `PATIENT LIST\n`;
+            text += `\nPATIENT LIST\n`;
             [1, 2, 4, 8].forEach(q => {
                 const qPats = patients.filter(p => p.freq === q);
                 if (qPats.length > 0) {
@@ -1167,62 +1212,38 @@
                         let details = [];
                         if (p.location) details.push(p.location);
                         if (p.pref) details.push(`Pref: ${p.pref}`);
-                        
                         const detailStr = details.length > 0 ? ` (${details.join(', ')})` : '';
                         text += `- ${p.name}${detailStr}\n`;
                     });
                 }
             });
-
-            // Execute Copy
             const textarea = document.createElement('textarea');
             textarea.value = text;
             document.body.appendChild(textarea);
             textarea.select();
-            try {
-                document.execCommand('copy');
-                showToast("Inputs copied to clipboard!");
-            } catch (err) {
-                console.error('Failed to copy', err);
-                showToast("Failed to copy");
-            }
+            try { document.execCommand('copy'); showToast("Inputs copied to clipboard!"); } 
+            catch (err) { console.error('Failed to copy', err); showToast("Failed to copy"); }
             document.body.removeChild(textarea);
         }
 
-        // --- VIEW SWITCHER ---
         function switchView(view) {
-            currentView = view; // Update state for copy logic
-
-            const btnCard = document.getElementById('btnViewCard');
-            const btnTable = document.getElementById('btnViewTable');
-            const btnTime = document.getElementById('btnViewTimeline');
-            
+            currentView = view;
             const boxCard = document.getElementById('viewCardContainer');
             const boxTable = document.getElementById('viewTableContainer');
             const boxTime = document.getElementById('viewTimelineContainer');
+            const btnCard = document.getElementById('btnViewCard');
+            const btnTable = document.getElementById('btnViewTable');
+            const btnTime = document.getElementById('btnViewTimeline');
 
-            // Reset buttons
-            const inactiveClass = "px-4 py-1.5 rounded-md text-sm font-semibold text-slate-600 hover:text-slate-800 transition";
+            boxCard.classList.add('hidden'); boxTable.classList.add('hidden'); boxTime.classList.add('hidden');
             const activeClass = "px-4 py-1.5 rounded-md text-sm font-semibold shadow-sm bg-white text-slate-800 transition";
+            const inactiveClass = "px-4 py-1.5 rounded-md text-sm font-semibold text-slate-600 hover:text-slate-800 transition";
             
-            btnCard.className = inactiveClass;
-            btnTable.className = inactiveClass;
-            btnTime.className = inactiveClass;
-            
-            boxCard.classList.add('hidden');
-            boxTable.classList.add('hidden');
-            boxTime.classList.add('hidden');
+            btnCard.className = inactiveClass; btnTable.className = inactiveClass; btnTime.className = inactiveClass;
 
-            if (view === 'card') {
-                btnCard.className = activeClass;
-                boxCard.classList.remove('hidden');
-            } else if (view === 'table') {
-                btnTable.className = activeClass;
-                boxTable.classList.remove('hidden');
-            } else {
-                btnTime.className = activeClass;
-                boxTime.classList.remove('hidden');
-            }
+            if (view === 'card') { boxCard.classList.remove('hidden'); btnCard.className = activeClass; }
+            else if (view === 'table') { boxTable.classList.remove('hidden'); btnTable.className = activeClass; }
+            else { boxTime.classList.remove('hidden'); btnTime.className = activeClass; }
         }
 
         function showToast(message) {
