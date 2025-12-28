@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WardWatch: Patient Monitor Allocator</title>
+    <title>Patient Monitor Allocator</title>
     <!-- Using Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Using FontAwesome -->
