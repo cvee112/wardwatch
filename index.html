@@ -1748,7 +1748,7 @@
             document.body.removeChild(textarea);
         }
 
-	function copyCurrentOutput() {
+	function copyCurrentOutput()function copyCurrentOutput() {
             if (!currentAssignment || !currentSchedule) {
                 showToast("Generate a schedule first!");
                 return;
@@ -1780,7 +1780,9 @@
                 // Generate Header Row
                 const startStr = document.getElementById('startTime').value;
                 const totalHoursInt = Math.ceil(shiftHours);
-                let headers = ["Patient", "Freq", "Location"];
+                
+                // CHANGE: Location is now the first column
+                let headers = ["Location", "Patient", "Freq"];
                 
                 for(let i=0; i<totalHoursInt; i++) {
                     let d = new Date(`01/01/2000 ${startStr}`);
@@ -1793,17 +1795,21 @@
                 let sortedPatients = [...patients].sort(patientComparator);
                 
                 sortedPatients.forEach(p => {
-                    let row = [p.name, `Q${p.freq}`, p.location || "-"];
+                    // CHANGE: Location first, Uppercase names, Empty string if null
+                    let row = [
+                        (p.location || "").toUpperCase(), 
+                        p.name.toUpperCase(), 
+                        `Q${p.freq}`
+                    ];
                     
                     // Fill time slots
                     for(let h=0; h<totalHoursInt; h++) {
-                        let assignedDoc = "-";
+                        let assignedDoc = ""; // CHANGE: Default to empty string
                         if (currentSchedule[h]) {
                             const hourAssignments = currentSchedule[h];
                             Object.keys(hourAssignments).forEach(docName => {
                                 if (hourAssignments[docName].some(t => t.patient.id === p.id)) {
-                                    // CHANGE: Use full name instead of substring
-                                    assignedDoc = docName; 
+                                    assignedDoc = docName.toUpperCase(); 
                                 }
                             });
                         }
@@ -1852,7 +1858,7 @@
                 showToast("Failed to copy"); 
             }
             document.body.removeChild(textarea);
-        }
+        } 
 
 	function downloadCSV() {
             if (!currentSchedule) {
