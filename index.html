@@ -1761,31 +1761,27 @@
                 const docs = Object.values(currentAssignment);
                 
                 docs.forEach(d => {
-                    // Skip doctors with no patients to keep it minimalist
                     if (d.patients.length === 0) return;
 
                     text += `DR. ${d.name.toUpperCase()}\n`;
                     
-                    // Sort by Location then Name (using existing comparator)
                     const sortedP = [...d.patients].sort(patientComparator);
                     
                     sortedP.forEach(p => {
                         const locStr = p.location ? ` (${p.location})` : "";
-                        // Format: [Q4] Patient Name (Location)
                         text += `[Q${p.freq}] ${p.name}${locStr}\n`;
                     });
                     text += `\n`;
                 });
             } 
 
-            // --- 2. TABLE VIEW (Excel-ready TSV) ---
+            // --- 2. TABLE VIEW (Excel/Sheets Ready) ---
             else if (currentView === 'table') {
                 // Generate Header Row
                 const startStr = document.getElementById('startTime').value;
                 const totalHoursInt = Math.ceil(shiftHours);
                 let headers = ["Patient", "Freq", "Location"];
                 
-                // Generate Time Columns
                 for(let i=0; i<totalHoursInt; i++) {
                     let d = new Date(`01/01/2000 ${startStr}`);
                     d.setHours(d.getHours() + i);
@@ -1806,8 +1802,8 @@
                             const hourAssignments = currentSchedule[h];
                             Object.keys(hourAssignments).forEach(docName => {
                                 if (hourAssignments[docName].some(t => t.patient.id === p.id)) {
-                                    // Use first 3 letters of doc name for compactness
-                                    assignedDoc = docName.substring(0, 3).toUpperCase();
+                                    // CHANGE: Use full name instead of substring
+                                    assignedDoc = docName; 
                                 }
                             });
                         }
@@ -1817,27 +1813,25 @@
                 });
             }
 
-            // --- 3. TIMELINE VIEW (Chronological) ---
+            // --- 3. TIMELINE VIEW ---
             else if (currentView === 'timeline') {
                 const startStr = document.getElementById('startTime').value;
                 const startHour = parseInt(startStr.split(':')[0]);
                 const startMin = startStr.split(':')[1];
 
                 currentSchedule.forEach((hourAssignments, i) => {
-                    // Format Time Header
                     let currentH = (startHour + i) % 24;
                     let ampm = currentH >= 12 ? 'PM' : 'AM';
                     let displayH = currentH % 12;
                     if(displayH === 0) displayH = 12;
                     
                     const hasTasks = Object.keys(hourAssignments).length > 0;
-                    if (!hasTasks) return; // Skip empty hours for minimalism
+                    if (!hasTasks) return;
 
                     text += `--- ${displayH}:${startMin} ${ampm} ---\n`;
 
                     Object.keys(hourAssignments).sort().forEach(docName => {
                         const tasks = hourAssignments[docName];
-                        // Group names into a comma list: "Dr. Smith: Pat A, Pat B"
                         const names = tasks.map(t => t.patient.name).join(", ");
                         text += `${docName}: ${names}\n`;
                     });
