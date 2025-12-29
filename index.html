@@ -1763,7 +1763,7 @@
                 docs.forEach(d => {
                     if (d.patients.length === 0) return;
 
-                    text += `${d.name.toUpperCase()}\n`;
+                    text += `DR. ${d.name.toUpperCase()}\n`;
                     
                     const sortedP = [...d.patients].sort(patientComparator);
                     
@@ -1777,13 +1777,11 @@
 
             // --- 2. TABLE VIEW (Excel/Sheets Ready) ---
             else if (currentView === 'table') {
-                // Generate Header Row
                 const startStr = document.getElementById('startTime').value;
                 const totalHoursInt = Math.ceil(shiftHours);
                 
-                // CHANGE: Location is now the first column
+                // Headers: Location First
                 let headers = ["Location", "Patient", "Freq"];
-                
                 for(let i=0; i<totalHoursInt; i++) {
                     let d = new Date(`01/01/2000 ${startStr}`);
                     d.setHours(d.getHours() + i);
@@ -1791,20 +1789,18 @@
                 }
                 text += headers.join("\t") + "\n";
 
-                // Generate Rows
                 let sortedPatients = [...patients].sort(patientComparator);
                 
                 sortedPatients.forEach(p => {
-                    // CHANGE: Location first, Uppercase names, Empty string if null
+                    // Location first, Uppercase, Empty string if null
                     let row = [
                         (p.location || "").toUpperCase(), 
                         p.name.toUpperCase(), 
                         `Q${p.freq}`
                     ];
                     
-                    // Fill time slots
                     for(let h=0; h<totalHoursInt; h++) {
-                        let assignedDoc = ""; // CHANGE: Default to empty string
+                        let assignedDoc = ""; 
                         if (currentSchedule[h]) {
                             const hourAssignments = currentSchedule[h];
                             Object.keys(hourAssignments).forEach(docName => {
@@ -1819,11 +1815,14 @@
                 });
             }
 
-            // --- 3. TIMELINE VIEW ---
+            // --- 3. TIMELINE VIEW (Detailed & Structured) ---
             else if (currentView === 'timeline') {
                 const startStr = document.getElementById('startTime').value;
                 const startHour = parseInt(startStr.split(':')[0]);
                 const startMin = startStr.split(':')[1];
+                
+                text += `TIMELINE SCHEDULE\nShift Start: ${startStr}\n`;
+                text += `========================================\n\n`;
 
                 currentSchedule.forEach((hourAssignments, i) => {
                     let currentH = (startHour + i) % 24;
@@ -1834,14 +1833,49 @@
                     const hasTasks = Object.keys(hourAssignments).length > 0;
                     if (!hasTasks) return;
 
-                    text += `--- ${displayH}:${startMin} ${ampm} ---\n`;
+                    // Hour Header
+                    text += `[ ${displayH}:${startMin} ${ampm} ]\n`;
+                    text += `----------------------------------------\n`;
 
+                    // Sort doctors alphabetically
                     Object.keys(hourAssignments).sort().forEach(docName => {
                         const tasks = hourAssignments[docName];
-                        const names = tasks.map(t => t.patient.name).join(", ");
-                        text += `${docName}: ${names}\n`;
+                        if (tasks.length === 0) return;
+
+                        // Doctor Header: > NAME (Count)
+                        text += `  > ${docName.toUpperCase()} (${tasks.length})\n`;
+
+                        // Sort tasks: Location > Patient Name
+                        tasks.sort((a,b) => {
+                            const locA = a.patient.location || "ZZZ"; 
+                            const locB = b.patient.location || "ZZZ";
+                            if (locA !== locB) return locA.localeCompare(locB);
+                            return a.patient.name.localeCompare(b.patient.name);
+                        });
+
+                        tasks.forEach(t => {
+                            const p = t.patient;
+                            const locStr = p.location ? `[${p.location.toUpperCase()}]` : "";
+                            const freqStr = `(Q${p.freq})`;
+                            
+                            // Status Flags
+                            let flags = [];
+                            if (t.isCoverage) flags.push("*COVERING*");
+                            if (t.unassigned) flags.push("!UNASSIGNED!");
+                            
+                            // Only show primary doc name if covering, helps context
+                            if (t.isCoverage && t.primaryDoc) {
+                                flags.push(`(Primary: ${t.primaryDoc.name})`);
+                            }
+
+                            const flagStr = flags.length > 0 ? ` ${flags.join(" ")}` : "";
+
+                            // Indented bullet point
+                            text += `    • ${p.name.toUpperCase()} ${locStr} ${freqStr}${flagStr}\n`;
+                        });
+                        text += `\n`; // Spacer between doctors
                     });
-                    text += "\n";
+                    text += `\n`; // Spacer between hours
                 });
             }
 
@@ -1858,7 +1892,7 @@
                 showToast("Failed to copy"); 
             }
             document.body.removeChild(textarea);
-        } 
+        }
 
 	function downloadCSV() {
             if (!currentSchedule) {
