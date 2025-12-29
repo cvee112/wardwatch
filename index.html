@@ -117,6 +117,17 @@
                             </div>
                             <div class="text-center text-xs font-semibold text-blue-600 mt-1" id="equityValueDisplay">Respect Availability: 100%</div>
                         </div>
+
+                        <!-- CLUSTERING SLIDER -->
+                        <div class="mt-4 pt-4 border-t border-slate-200">
+                            <label class="block text-sm font-bold text-slate-700 mb-2">Location Clustering</label>
+                            <input type="range" id="clusterSlider" min="0" max="100" value="50" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" oninput="updateClusterDisplay()">
+                            <div class="flex justify-between text-xs text-slate-500 mt-1">
+                                <span>Scatter</span>
+                                <span>Cluster</span>
+                            </div>
+                            <div class="text-center text-xs font-semibold text-indigo-600 mt-1" id="clusterValueDisplay">Stickiness: 50%</div>
+                        </div>
                     </div>
                 </div>
 
@@ -220,15 +231,7 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left text-slate-600">
                             <thead class="text-xs text-slate-700 uppercase bg-slate-50 border-b">
-                                <tr>
-                                    <th class="px-6 py-3 font-bold">Doctor</th>
-                                    <th class="px-6 py-3 text-red-600 bg-red-50">Q1</th>
-                                    <th class="px-6 py-3 text-orange-600 bg-orange-50">Q2</th>
-                                    <th class="px-6 py-3 text-blue-600 bg-blue-50">Q4</th>
-                                    <th class="px-6 py-3 text-green-600 bg-green-50">Q8</th>
-                                    <th class="px-6 py-3 font-bold text-slate-800 bg-slate-100 text-right">Active / Burden</th>
-                                    <th class="px-6 py-3 font-bold text-slate-800 bg-slate-100 text-right">Avail Hrs</th>
-                                </tr>
+                                <!-- Headers injected by JS -->
                             </thead>
                             <tbody id="summaryTableBody" class="divide-y divide-slate-100"></tbody>
                         </table>
@@ -261,14 +264,15 @@
         let patients = []; 
         let locations = [
             { id: 1, name: 'Aquarium' },
-            { id: 2, name: 'Left Central' },
-            { id: 3, name: 'Left Peripheral' },
+            { id: 2, name: 'Left Peripheral' },
+            { id: 3, name: 'Left Central' },
             { id: 4, name: 'Right Central' },
             { id: 5, name: 'Right Peripheral' },
             { id: 6, name: 'Isolation Room' }
         ];
         let shiftHours = 12;
         let q8Offset = 0; 
+        let patientEntryCounter = 0; // Tracks order of entry
         
         let currentAssignment = null;
         let currentSchedule = null; // Store simulated schedule
@@ -291,6 +295,11 @@
                          val == 0 ? "Ignore Availability (Equal Totals)" : 
                          `Respect Availability: ${val}%`;
             document.getElementById('equityValueDisplay').innerText = text;
+        }
+
+        function updateClusterDisplay() {
+            const val = document.getElementById('clusterSlider').value;
+            document.getElementById('clusterValueDisplay').innerText = `Stickiness: ${val}%`;
         }
 
         // --- HELPER: TIME MATH ---
@@ -327,6 +336,7 @@
                 doctors = [];
                 patients = [];
                 locations = [];
+                patientEntryCounter = 0;
                 
                 const lines = text.split('\n').map(l => l.trim());
                 let currentSection = null;
@@ -394,12 +404,28 @@
                                     name: pName,
                                     freq: currentQ,
                                     location: pLoc,
-                                    pref: pPref
+                                    pref: pPref,
+                                    entryOrder: patientEntryCounter++
                                 });
                             }
                         }
                     }
                 }
+
+                // --- NEW: ENFORCE LOCATION ORDER ---
+                const standardOrder = ['Aquarium', 'Left Peripheral', 'Left Central', 'Right Central', 'Right Peripheral', 'Isolation Room'];
+                locations.sort((a,b) => {
+                    let idxA = standardOrder.indexOf(a.name);
+                    let idxB = standardOrder.indexOf(b.name);
+                    // If not in standard list, put at the end
+                    if (idxA === -1) idxA = 999;
+                    if (idxB === -1) idxB = 999;
+                    
+                    if (idxA !== idxB) return idxA - idxB;
+                    return a.name.localeCompare(b.name);
+                });
+                // -----------------------------------
+
                 updateDuration();
                 renderAll();
                 toggleImportModal();
@@ -691,7 +717,14 @@
                 const names = rawValue.split(/[\n,]+/).map(n => n.trim()).filter(n => n);
                 if (names.length > 0) {
                     names.forEach(name => {
-                         patients.push({ id: Date.now() + Math.random(), name: name, freq: parseInt(freq), pref: "", location: "" });
+                         patients.push({ 
+                             id: Date.now() + Math.random(), 
+                             name: name, 
+                             freq: parseInt(freq), 
+                             pref: "", 
+                             location: "",
+                             entryOrder: patientEntryCounter++
+                        });
                     });
                     renderAll();
                     input.value = '';
@@ -943,6 +976,15 @@
             const equitySlider = document.getElementById('equitySlider');
             const equityFactor = equitySlider ? parseInt(equitySlider.value) / 100 : 1;
 
+            // Get Clustering Setting (0 = No Bonus, 100 = High Bonus)
+            const clusterSlider = document.getElementById('clusterSlider');
+            const clusterVal = clusterSlider ? parseInt(clusterSlider.value) : 50;
+            // Map 0-100 to a discount multiplier range.
+            // 0% -> 1.0 (No Discount)
+            // 100% -> 0.7 (30% Discount for same location)
+            const clusterDiscount = (clusterVal / 100) * 0.30;
+            const clusterMultiplier = 1.0 - clusterDiscount;
+
             // Init & Calc Total Burden
             let totalBurden = 0;
             patients.forEach(p => totalBurden += getBurden(p));
@@ -1035,6 +1077,15 @@
                     if (p.pref === a.name) scoreA *= prefBonus;
                     if (p.pref === b.name) scoreB *= prefBonus;
 
+                    // Clustering Bonus (Location Stickiness)
+                    // If doctor already has a patient in this location, reduce score to encourage grouping.
+                    const hasLocA = a.patients.some(existing => existing.location === p.location);
+                    const hasLocB = b.patients.some(existing => existing.location === p.location);
+                    
+                    // Apply dynamic discount derived from slider
+                    if (hasLocA) scoreA *= clusterMultiplier; 
+                    if (hasLocB) scoreB *= clusterMultiplier;
+
                     return scoreA - scoreB;
                 });
                 
@@ -1080,16 +1131,21 @@
             document.getElementById('minLoadDisplay').innerText = Math.min(...activeLoads);
 
             docs.forEach(d => {
+                // Sorting for Output View:
+                // 1. Location Index (Aquarium > Left Periph > Left Central > Right Central > Right Periph)
+                // 2. Entry Order (Time of entry)
                 d.patients.sort((a,b) => {
-                    if (a.freq !== b.freq) return a.freq - b.freq;
-                    const locA = (a.location || "").toLowerCase();
-                    const locB = (b.location || "").toLowerCase();
-                    if (locA !== locB) {
-                        if (locA === "") return 1;
-                        if (locB === "") return -1;
-                        return locA.localeCompare(locB);
-                    }
-                    return a.name.localeCompare(b.name);
+                    const locIdxA = locations.findIndex(l => l.name === a.location);
+                    const locIdxB = locations.findIndex(l => l.name === b.location);
+                    
+                    // Handle missing/unknown locations (put them at end)
+                    const safeIdxA = locIdxA === -1 ? 999 : locIdxA;
+                    const safeIdxB = locIdxB === -1 ? 999 : locIdxB;
+
+                    if (safeIdxA !== safeIdxB) return safeIdxA - safeIdxB;
+                    
+                    // If same location, sort by entry order
+                    return (a.entryOrder || 0) - (b.entryOrder || 0);
                 });
 
                 let pListHTML = d.patients.map(p => `
@@ -1127,7 +1183,33 @@
         }
 
         function renderSummaryTable(assignment) {
+            const table = document.querySelector('#viewTableContainer table');
+            const thead = table.querySelector('thead');
             const tbody = document.getElementById('summaryTableBody');
+            
+            // Rebuild Header Dynamically
+            let headerHTML = `
+                <tr>
+                    <th class="px-6 py-3 font-bold text-slate-800 whitespace-nowrap bg-slate-50 sticky left-0 z-10 border-r">Doctor</th>
+            `;
+            
+            // Add Location Headers
+            locations.forEach(l => {
+                headerHTML += `<th class="px-4 py-3 text-xs font-bold text-indigo-700 bg-indigo-50/50 text-center whitespace-nowrap border-r border-indigo-100">${l.name}</th>`;
+            });
+            
+            headerHTML += `
+                    <th class="px-4 py-3 text-red-600 bg-red-50 text-center border-r border-red-100">Q1</th>
+                    <th class="px-4 py-3 text-orange-600 bg-orange-50 text-center border-r border-orange-100">Q2</th>
+                    <th class="px-4 py-3 text-blue-600 bg-blue-50 text-center border-r border-blue-100">Q4</th>
+                    <th class="px-4 py-3 text-green-600 bg-green-50 text-center border-r border-green-100">Q8</th>
+                    <th class="px-6 py-3 font-bold text-slate-800 bg-slate-100 text-right whitespace-nowrap">Active / Burden</th>
+                    <th class="px-6 py-3 font-bold text-slate-800 bg-slate-100 text-right whitespace-nowrap">Avail Hrs</th>
+                </tr>
+            `;
+            thead.innerHTML = headerHTML;
+
+            // Rebuild Body
             tbody.innerHTML = '';
             Object.values(assignment).forEach(doc => {
                 const q1 = doc.patients.filter(p => p.freq === 1).length;
@@ -1135,16 +1217,25 @@
                 const q4 = doc.patients.filter(p => p.freq === 4).length;
                 const q8 = doc.patients.filter(p => p.freq === 8).length;
                 
+                // Location Counts
+                let locCells = '';
+                locations.forEach(l => {
+                    const count = doc.patients.filter(p => p.location === l.name).length;
+                    const style = count > 0 ? "font-bold text-indigo-700 bg-indigo-50/30" : "text-slate-300 bg-white";
+                    locCells += `<td class="px-4 py-4 text-center border-r border-slate-100 text-xs ${style}">${count > 0 ? count : '-'}</td>`;
+                });
+
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50";
+                tr.className = "hover:bg-slate-50 border-b last:border-0";
                 tr.innerHTML = `
-                    <td class="px-6 py-4 font-medium text-slate-900">${doc.name}</td>
-                    <td class="px-6 py-4 bg-red-50/50 font-mono text-red-700 font-bold">${q1}</td>
-                    <td class="px-6 py-4 bg-orange-50/50 font-mono text-orange-700 font-bold">${q2}</td>
-                    <td class="px-6 py-4 bg-blue-50/50 font-mono text-blue-700 font-bold">${q4}</td>
-                    <td class="px-6 py-4 bg-green-50/50 font-mono text-green-700 font-bold">${q8}</td>
-                    <td class="px-6 py-4 text-right font-bold text-lg bg-slate-50">${doc.activeLoad} <span class="text-xs font-normal text-slate-400">/ ${doc.burdenLoad}</span></td>
-                    <td class="px-6 py-4 text-right text-slate-500">${doc.availHours.toFixed(1)}h</td>
+                    <td class="px-6 py-4 font-medium text-slate-900 whitespace-nowrap bg-white sticky left-0 border-r font-bold">${doc.name}</td>
+                    ${locCells}
+                    <td class="px-4 py-4 bg-red-50/10 font-mono text-red-700 font-bold text-center border-r border-slate-100">${q1}</td>
+                    <td class="px-4 py-4 bg-orange-50/10 font-mono text-orange-700 font-bold text-center border-r border-slate-100">${q2}</td>
+                    <td class="px-4 py-4 bg-blue-50/10 font-mono text-blue-700 font-bold text-center border-r border-slate-100">${q4}</td>
+                    <td class="px-4 py-4 bg-green-50/10 font-mono text-green-700 font-bold text-center border-r border-slate-100">${q8}</td>
+                    <td class="px-6 py-4 text-right font-bold text-lg bg-slate-50 whitespace-nowrap">${doc.activeLoad} <span class="text-xs font-normal text-slate-400">/ ${doc.burdenLoad}</span></td>
+                    <td class="px-6 py-4 text-right text-slate-500 whitespace-nowrap">${doc.availHours.toFixed(1)}h</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -1194,12 +1285,26 @@
                             if(!locGroups[loc]) locGroups[loc] = [];
                             locGroups[loc].push(t);
                         });
-                        let sortedLocs = Object.keys(locGroups).sort((a,b) => a.localeCompare(b));
+                        
+                        // Sort locations based on config order
+                        let sortedLocs = Object.keys(locGroups).sort((a,b) => {
+                             const idxA = locations.findIndex(l => l.name === a);
+                             const idxB = locations.findIndex(l => l.name === b);
+                             const safeIdxA = idxA === -1 ? 999 : idxA;
+                             const safeIdxB = idxB === -1 ? 999 : idxB;
+                             return safeIdxA - safeIdxB;
+                        });
 
                         let innerHTML = '';
                         sortedLocs.forEach(locName => {
                             let locTasks = locGroups[locName];
-                            locTasks.sort((a,b) => a.patient.freq - b.patient.freq);
+                            
+                            // Sort tasks within location by Entry Order (or freq if entry order missing)
+                            locTasks.sort((a,b) => {
+                                const orderA = a.patient.entryOrder !== undefined ? a.patient.entryOrder : 99999;
+                                const orderB = b.patient.entryOrder !== undefined ? b.patient.entryOrder : 99999;
+                                return orderA - orderB;
+                            });
                             
                             innerHTML += `
                                 <div class="mb-2 last:mb-0">
@@ -1243,26 +1348,38 @@
                 textToCopy = "SHIFT ASSIGNMENTS\n=================\n\n";
                 Object.values(currentAssignment).forEach(d => {
                     textToCopy += `${d.name} [Active: ${d.activeLoad}] [Burden: ${d.burdenLoad}] [Avail: ${d.availHours.toFixed(1)}h]\n`;
+                    
+                    // Sort for export using same logic as Card view
                     let sortedPatients = [...d.patients].sort((a,b) => {
-                        if (a.freq !== b.freq) return a.freq - b.freq;
-                        const locA = (a.location || "").toLowerCase();
-                        const locB = (b.location || "").toLowerCase();
-                        if (locA !== locB) return locA.localeCompare(locB);
-                        return a.name.localeCompare(b.name);
+                        const locIdxA = locations.findIndex(l => l.name === a.location);
+                        const locIdxB = locations.findIndex(l => l.name === b.location);
+                        const safeIdxA = locIdxA === -1 ? 999 : locIdxA;
+                        const safeIdxB = locIdxB === -1 ? 999 : locIdxB;
+                        if (safeIdxA !== safeIdxB) return safeIdxA - safeIdxB;
+                        return (a.entryOrder || 0) - (b.entryOrder || 0);
                     });
+
                     sortedPatients.forEach(p => {
                         textToCopy += ` - ${p.name} (Q${p.freq}) ${p.location ? '['+p.location+']' : ''}\n`;
                     });
                     textToCopy += "\n";
                 });
             } else if (currentView === 'table') {
-                textToCopy = "SUMMARY TABLE\nDoctor\tQ1\tQ2\tQ4\tQ8\tActive\tBurden\tAvail\n";
+                // Header
+                let headers = ["Doctor", ...locations.map(l => l.name), "Q1", "Q2", "Q4", "Q8", "Active", "Burden", "Avail"];
+                textToCopy = "SUMMARY TABLE\n" + headers.join("\t") + "\n";
+                
                 Object.values(currentAssignment).forEach(d => {
                     const q1 = d.patients.filter(p => p.freq === 1).length;
                     const q2 = d.patients.filter(p => p.freq === 2).length;
                     const q4 = d.patients.filter(p => p.freq === 4).length;
                     const q8 = d.patients.filter(p => p.freq === 8).length;
-                    textToCopy += `${d.name}\t${q1}\t${q2}\t${q4}\t${q8}\t${d.activeLoad}\t${d.burdenLoad}\t${d.availHours.toFixed(1)}\n`;
+                    
+                    let locCounts = locations.map(l => {
+                        return d.patients.filter(p => p.location === l.name).length;
+                    }).join("\t");
+
+                    textToCopy += `${d.name}\t${locCounts}\t${q1}\t${q2}\t${q4}\t${q8}\t${d.activeLoad}\t${d.burdenLoad}\t${d.availHours.toFixed(1)}\n`;
                 });
             } else if (currentView === 'timeline') {
                 textToCopy = "TIMELINE SCHEDULE\n=================\n";
@@ -1280,12 +1397,21 @@
                     Object.keys(hourAssignments).sort().forEach(docName => {
                         const tasks = hourAssignments[docName];
                         textToCopy += ` ${docName}:\n`;
+                        
                         let sorted = tasks.sort((a,b) => {
-                             const locA = (a.patient.location || "").toLowerCase();
-                             const locB = (b.patient.location || "").toLowerCase();
-                             if (locA !== locB) return locA.localeCompare(locB);
-                             return a.patient.freq - b.patient.freq;
+                             // Sort by location index then entry order
+                             const idxA = locations.findIndex(l => l.name === a.patient.location);
+                             const idxB = locations.findIndex(l => l.name === b.patient.location);
+                             const safeIdxA = idxA === -1 ? 999 : idxA;
+                             const safeIdxB = idxB === -1 ? 999 : idxB;
+                             
+                             if (safeIdxA !== safeIdxB) return safeIdxA - safeIdxB;
+                             
+                             const orderA = a.patient.entryOrder !== undefined ? a.patient.entryOrder : 99999;
+                             const orderB = b.patient.entryOrder !== undefined ? b.patient.entryOrder : 99999;
+                             return orderA - orderB;
                         });
+
                         sorted.forEach(t => {
                             let note = t.isCoverage ? ` [Covering ${t.primaryDoc.name}]` : "";
                             if(t.unassigned) note = ` [PRIMARY ABSENT: ${t.primaryDoc.name}]`;
