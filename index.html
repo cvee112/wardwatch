@@ -1346,7 +1346,8 @@
                         if (assignedDoc === "UNASSIGNED") {
                              detailHTML += `<td class="p-1 border-l border-slate-100"><div class="w-full h-full bg-red-100 text-red-600 text-[10px] flex items-center justify-center rounded font-bold" title="Unassigned">!</div></td>`;
                         } else {
-                             const abbr = assignedDoc.substring(0, 3).toUpperCase();
+                             // --- CHANGE: SHOW 4 LETTERS INSTEAD OF 3 ---
+                             const abbr = assignedDoc.substring(0, 4).toUpperCase();
                              detailHTML += `<td class="p-1 border-l border-slate-100"><div class="w-full py-1 ${color.bg} ${color.text} text-[10px] flex items-center justify-center rounded font-bold border border-black/5" title="${assignedDoc}">${abbr}</div></td>`;
                         }
                     } else {
