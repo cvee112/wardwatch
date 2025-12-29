@@ -78,7 +78,8 @@
                 
                 <!-- 1. SHIFT CONFIG -->
                 <div class="card p-5 border-l-4 border-blue-500">
-                    <h2 class="text-xl font-bold mb-4 text-slate-700">1. Shift & Frequency</h2>
+                    <!-- Renamed Header -->
+                    <h2 class="text-xl font-bold mb-4 text-slate-700">1. Shift & Config</h2>
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
@@ -278,15 +279,21 @@
             <!-- VIEWS -->
             <div id="viewCardContainer"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="assignmentGrid"></div></div>
             
-            <div id="viewTableContainer" class="hidden">
-                <div class="bg-white rounded-lg shadow overflow-hidden border border-slate-200">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm text-left text-slate-600">
-                            <thead class="text-xs text-slate-700 uppercase bg-slate-50 border-b">
-                                <!-- Headers injected dynamically -->
-                            </thead>
-                            <tbody id="summaryTableBody" class="divide-y divide-slate-100"></tbody>
-                        </table>
+            <!-- MODIFIED: Wrapper to hold both tables -->
+            <div id="viewTableContainer" class="hidden space-y-8">
+                <!-- Summary Table -->
+                <div>
+                    <h3 class="text-lg font-bold text-slate-700 mb-2 ml-1">Doctor Summary</h3>
+                    <div class="bg-white rounded-lg shadow overflow-hidden border border-slate-200" id="summaryTableWrapper">
+                        <!-- Content Injected via JS -->
+                    </div>
+                </div>
+                
+                <!-- Detailed Schedule Table -->
+                <div>
+                    <h3 class="text-lg font-bold text-slate-700 mb-2 ml-1">Patient Schedule Matrix</h3>
+                    <div class="bg-white rounded-lg shadow overflow-x-auto border border-slate-200" id="detailTableWrapper">
+                        <!-- Content Injected via JS -->
                     </div>
                 </div>
             </div>
@@ -339,6 +346,20 @@
             { id: 6, name: 'Isolation Room' }
         ];
         
+        // Colors for doctors in table view
+        const DOC_COLORS = [
+            { bg: 'bg-blue-100', text: 'text-blue-800' },
+            { bg: 'bg-green-100', text: 'text-green-800' },
+            { bg: 'bg-purple-100', text: 'text-purple-800' },
+            { bg: 'bg-orange-100', text: 'text-orange-800' },
+            { bg: 'bg-pink-100', text: 'text-pink-800' },
+            { bg: 'bg-teal-100', text: 'text-teal-800' },
+            { bg: 'bg-indigo-100', text: 'text-indigo-800' },
+            { bg: 'bg-red-100', text: 'text-red-800' },
+            { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+            { bg: 'bg-cyan-100', text: 'text-cyan-800' }
+        ];
+
         // Configuration State
         let shiftHours = 12;
         let q2Offset = 0;
@@ -1029,12 +1050,20 @@
             });
         }
 
+        // --- HELPER FOR DOCTOR COLOR ---
+        function getDoctorColorClass(docName) {
+            const idx = doctors.findIndex(d => d.name === docName);
+            if (idx === -1) return { bg: 'bg-slate-100', text: 'text-slate-600' };
+            return DOC_COLORS[idx % DOC_COLORS.length];
+        }
+
         function renderSummaryTable(assignment) {
-            const table = document.querySelector('#viewTableContainer table');
-            const thead = table.querySelector('thead');
-            const tbody = document.getElementById('summaryTableBody');
+            const summaryContainer = document.getElementById('summaryTableWrapper');
+            const detailContainer = document.getElementById('detailTableWrapper');
             
-            let headerHTML = `<tr><th class="px-6 py-3 font-bold text-slate-800 whitespace-nowrap bg-slate-50 sticky left-0 z-10 border-r">Doctor</th>`;
+            // --- 1. RENDER DOCTOR SUMMARY TABLE ---
+            let headerHTML = `<table class="w-full text-sm text-left text-slate-600"><thead class="text-xs text-slate-700 uppercase bg-slate-50 border-b">
+                <tr><th class="px-6 py-3 font-bold text-slate-800 whitespace-nowrap bg-slate-50 sticky left-0 z-10 border-r">Doctor</th>`;
             locations.forEach(l => {
                 headerHTML += `<th class="px-4 py-3 text-xs font-bold text-indigo-700 bg-indigo-50/50 text-center whitespace-nowrap border-r border-indigo-100">${l.name}</th>`;
             });
@@ -1043,10 +1072,8 @@
                     <th class="px-4 py-3 text-blue-600 bg-blue-50 text-center border-r border-blue-100">Q4</th>
                     <th class="px-4 py-3 text-green-600 bg-green-50 text-center border-r border-green-100">Q8</th>
                     <th class="px-6 py-3 font-bold text-slate-800 bg-slate-100 text-right whitespace-nowrap">Active / Burden</th>
-                    <th class="px-6 py-3 font-bold text-slate-800 bg-slate-100 text-right whitespace-nowrap">Avail Hrs</th></tr>`;
-            thead.innerHTML = headerHTML;
+                    <th class="px-6 py-3 font-bold text-slate-800 bg-slate-100 text-right whitespace-nowrap">Avail Hrs</th></tr></thead><tbody class="divide-y divide-slate-100">`;
 
-            tbody.innerHTML = '';
             Object.values(assignment).forEach(doc => {
                 const q1 = doc.patients.filter(p => p.freq === 1).length;
                 const q2 = doc.patients.filter(p => p.freq === 2).length;
@@ -1060,20 +1087,108 @@
                     locCells += `<td class="px-4 py-4 text-center border-r border-slate-100 text-xs ${style}">${count > 0 ? count : '-'}</td>`;
                 });
 
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 border-b last:border-0";
-                tr.innerHTML = `
-                    <td class="px-6 py-4 font-medium text-slate-900 whitespace-nowrap bg-white sticky left-0 border-r font-bold">${doc.name}</td>
-                    ${locCells}
-                    <td class="px-4 py-4 bg-red-50/10 font-mono text-red-700 font-bold text-center border-r border-slate-100">${q1}</td>
-                    <td class="px-4 py-4 bg-orange-50/10 font-mono text-orange-700 font-bold text-center border-r border-slate-100">${q2}</td>
-                    <td class="px-4 py-4 bg-blue-50/10 font-mono text-blue-700 font-bold text-center border-r border-slate-100">${q4}</td>
-                    <td class="px-4 py-4 bg-green-50/10 font-mono text-green-700 font-bold text-center border-r border-slate-100">${q8}</td>
-                    <td class="px-6 py-4 text-right font-bold text-lg bg-slate-50 whitespace-nowrap">${doc.activeLoad} <span class="text-xs font-normal text-slate-400">/ ${doc.burdenLoad}</span></td>
-                    <td class="px-6 py-4 text-right text-slate-500 whitespace-nowrap">${doc.availHours.toFixed(1)}h</td>
+                // Get doctor color badge
+                const color = getDoctorColorClass(doc.name);
+                
+                headerHTML += `
+                    <tr class="hover:bg-slate-50 border-b last:border-0">
+                        <td class="px-6 py-4 font-medium text-slate-900 whitespace-nowrap bg-white sticky left-0 border-r font-bold">
+                            <span class="${color.bg} ${color.text} px-2 py-1 rounded text-xs mr-2 border border-black/10">${doc.name}</span>
+                        </td>
+                        ${locCells}
+                        <td class="px-4 py-4 bg-red-50/10 font-mono text-red-700 font-bold text-center border-r border-slate-100">${q1}</td>
+                        <td class="px-4 py-4 bg-orange-50/10 font-mono text-orange-700 font-bold text-center border-r border-slate-100">${q2}</td>
+                        <td class="px-4 py-4 bg-blue-50/10 font-mono text-blue-700 font-bold text-center border-r border-slate-100">${q4}</td>
+                        <td class="px-4 py-4 bg-green-50/10 font-mono text-green-700 font-bold text-center border-r border-slate-100">${q8}</td>
+                        <td class="px-6 py-4 text-right font-bold text-lg bg-slate-50 whitespace-nowrap">${doc.activeLoad} <span class="text-xs font-normal text-slate-400">/ ${doc.burdenLoad}</span></td>
+                        <td class="px-6 py-4 text-right text-slate-500 whitespace-nowrap">${doc.availHours.toFixed(1)}h</td>
+                    </tr>
                 `;
-                tbody.appendChild(tr);
             });
+            headerHTML += `</tbody></table>`;
+            summaryContainer.innerHTML = headerHTML;
+
+            // --- 2. RENDER DETAILED SCHEDULE TABLE ---
+            
+            // Build Time Headers
+            const startStr = document.getElementById('startTime').value;
+            const totalHoursInt = Math.ceil(shiftHours);
+            let timeHeaders = '';
+            for(let i=0; i<totalHoursInt; i++) {
+                let d = new Date(`01/01/2000 ${startStr}`);
+                d.setHours(d.getHours() + i);
+                let timeText = d.toLocaleTimeString([], {hour: 'numeric', hour12: true}).replace(" ", "").toLowerCase();
+                timeHeaders += `<th class="px-2 py-3 text-xs text-slate-500 text-center border-l border-slate-200 bg-slate-50 min-w-[50px]">${timeText}</th>`;
+            }
+
+            // Table Header
+            let detailHTML = `<table class="w-full text-sm text-left border-collapse"><thead class="text-xs text-slate-700 uppercase bg-slate-100 border-b">
+                <tr>
+                    <th class="px-4 py-3 sticky left-0 bg-slate-100 z-30 border-r w-48 shadow-sm">Patient</th>
+                    <th class="px-2 py-3 text-center border-r bg-slate-50">Freq</th>
+                    ${timeHeaders}
+                </tr></thead><tbody class="divide-y divide-slate-200">`;
+
+            // Sort all patients by Location > Entry
+            let sortedPatients = [...patients].sort(patientComparator);
+            let lastLoc = "___START___";
+
+            sortedPatients.forEach(p => {
+                let currentLoc = p.location || "Unspecified";
+                
+                // Insert Location Header Row if location changes
+                if (currentLoc !== lastLoc) {
+                    detailHTML += `
+                        <tr class="bg-indigo-50 border-y border-indigo-100">
+                            <td class="px-4 py-1.5 text-xs font-bold text-indigo-800 uppercase tracking-wider sticky left-0 z-20 bg-indigo-50 border-r border-indigo-100 shadow-sm">
+                                <div class="truncate w-44"><i class="fa-solid fa-location-dot mr-1 opacity-50"></i> ${currentLoc}</div>
+                            </td>
+                            <td colspan="${1 + totalHoursInt}" class="bg-indigo-50"></td>
+                        </tr>
+                    `;
+                    lastLoc = currentLoc;
+                }
+                
+                const qColorText = getQTextColor(p.freq);
+                const qBadge = `<span class="font-mono font-bold ${qColorText}">Q${p.freq}</span>`;
+                
+                detailHTML += `
+                    <tr class="hover:bg-slate-50 bg-white group">
+                        <td class="px-4 py-2 sticky left-0 bg-white group-hover:bg-slate-50 z-10 border-r border-slate-200 pl-8 shadow-sm">
+                            <div class="font-medium text-slate-700 truncate" title="${p.name}">${p.name}</div>
+                        </td>
+                        <td class="px-2 py-2 text-center border-r border-slate-100">${qBadge}</td>
+                `;
+
+                // Render Cells for Each Hour
+                for(let h=0; h<totalHoursInt; h++) {
+                    let assignedDoc = null;
+                    if (currentSchedule && currentSchedule[h]) {
+                        const hourAssignments = currentSchedule[h];
+                        Object.keys(hourAssignments).forEach(docName => {
+                            if (hourAssignments[docName].some(t => t.patient.id === p.id)) {
+                                assignedDoc = docName;
+                            }
+                        });
+                    }
+
+                    if (assignedDoc) {
+                        const color = getDoctorColorClass(assignedDoc);
+                        if (assignedDoc === "UNASSIGNED") {
+                             detailHTML += `<td class="p-1 border-l border-slate-100"><div class="w-full h-full bg-red-100 text-red-600 text-[10px] flex items-center justify-center rounded font-bold" title="Unassigned">!</div></td>`;
+                        } else {
+                             const abbr = assignedDoc.substring(0, 3).toUpperCase();
+                             detailHTML += `<td class="p-1 border-l border-slate-100"><div class="w-full py-1 ${color.bg} ${color.text} text-[10px] flex items-center justify-center rounded font-bold border border-black/5" title="${assignedDoc}">${abbr}</div></td>`;
+                        }
+                    } else {
+                        detailHTML += `<td class="p-1 border-l border-slate-100 bg-slate-50/30"></td>`;
+                    }
+                }
+                detailHTML += `</tr>`;
+            });
+
+            detailHTML += `</tbody></table>`;
+            detailContainer.innerHTML = detailHTML;
         }
 
         function renderTimeline(assignment) {
