@@ -90,7 +90,7 @@ Since WardWatch is a static web application, it requires no build step or backen
 
 1.  Clone the repository:
     ```bash
-    git clone [https://github.com/cvee112/wardwatch.git](https://github.com/cvee112/wardwatch.git)
+    git clone https://github.com/cvee112/wardwatch.git
     ```
 2.  Navigate to the directory:
     ```bash
