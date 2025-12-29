@@ -1743,6 +1743,67 @@
             document.body.removeChild(textarea);
         }
 
+	function copyCurrentOutput() {
+            if (!currentAssignment) {
+                showToast("No results to copy! Generate a schedule first.");
+                return;
+            }
+
+            let text = `WARDWATCH SCHEDULE OUTPUT\n`;
+            text += `Generated: ${new Date().toLocaleString()}\n`;
+            text += `====================================\n\n`;
+
+            const docs = Object.values(currentAssignment);
+            
+            // 1. Statistics Summary
+            const activeLoads = docs.map(d => d.activeLoad);
+            const totalActive = activeLoads.reduce((a,b)=>a+b, 0);
+            const totalHours = docs.reduce((a,b)=>a+b.availHours, 0);
+            const avg = totalHours > 0 ? (totalActive / totalHours).toFixed(2) : 0;
+            
+            text += `STATS:\n`;
+            text += `- Avg Checks/Hr: ${avg}\n`;
+            text += `- Max Load: ${Math.max(...activeLoads)}\n`;
+            text += `- Min Load: ${Math.min(...activeLoads)}\n\n`;
+
+            // 2. Doctor Assignments
+            docs.forEach(d => {
+                text += `DR. ${d.name.toUpperCase()}\n`;
+                text += `------------------------------------\n`;
+                text += `Load: ${d.activeLoad} Active / ${d.burdenLoad} Burden\n`;
+                text += `Avail: ${d.availHours.toFixed(1)}h\n\n`;
+
+                if (d.patients.length === 0) {
+                    text += `  (No patients assigned)\n`;
+                } else {
+                    // Sort to match UI
+                    const sortedP = [...d.patients].sort(patientComparator);
+                    
+                    sortedP.forEach(p => {
+                        const locStr = p.location ? `[${p.location}]` : "";
+                        const prefMark = p.pref === d.name ? "*" : ""; 
+                        // Format: Q4 | Patient Name [Location] *
+                        text += `  Q${p.freq}\t| ${p.name} ${locStr} ${prefMark}\n`;
+                    });
+                }
+                text += `\n`;
+            });
+
+            // 3. Execution
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try { 
+                document.execCommand('copy'); 
+                showToast("Schedule copied to clipboard!"); 
+            } catch (err) { 
+                console.error('Failed to copy', err); 
+                showToast("Failed to copy"); 
+            }
+            document.body.removeChild(textarea);
+        }
+
         function switchView(view) {
             currentView = view;
             const boxCard = document.getElementById('viewCardContainer');
