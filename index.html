@@ -163,15 +163,29 @@
                         </div>
 
                         <!-- TIME BLOCKING TOGGLE -->
-                        <div class="mt-4 pt-4 border-t border-slate-200">
+                        <div class="mt-4 pt-4 border-t border-slate-200 flex flex-col gap-3">
                             <div class="flex items-center justify-between">
-                                <label class="text-sm font-bold text-slate-700">Time Blocking Mode</label>
+                                <div>
+                                    <label class="text-sm font-bold text-slate-700 block">Time Blocking</label>
+                                    <span class="text-[10px] text-slate-400">One doctor covers all patients per hour.</span>
+                                </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
                                     <input type="checkbox" id="timeBlockingToggle" class="sr-only peer">
                                     <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                                 </label>
                             </div>
-                            <p class="text-[10px] text-slate-400 mt-1 italic">Assign one doctor to cover ALL patients for specific hourly blocks.</p>
+                            
+                            <!-- STAGGER TOGGLE -->
+                            <div class="flex items-center justify-between border-t border-slate-100 pt-3">
+                                <div>
+                                    <label class="text-sm font-bold text-slate-700 block">Stagger Schedule</label>
+                                    <span class="text-[10px] text-slate-400">Distribute checks to smooth workload.</span>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="staggerToggle" class="sr-only peer">
+                                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-500"></div>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -291,12 +305,10 @@
             <!-- VIEWS -->
             <div id="viewCardContainer"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="assignmentGrid"></div></div>
             
-            <!-- MODIFIED: Wrapper to hold both tables -->
             <div id="viewTableContainer" class="hidden space-y-8">
                 <!-- Summary Table -->
                 <div>
                     <h3 class="text-lg font-bold text-slate-700 mb-2 ml-1">Doctor Summary</h3>
-                    <!-- FIXED: Changed overflow-hidden to overflow-x-auto -->
                     <div class="bg-white rounded-lg shadow overflow-x-auto border border-slate-200" id="summaryTableWrapper">
                         <!-- Content Injected via JS -->
                     </div>
@@ -508,6 +520,7 @@
                              freq: parseInt(freq), 
                              pref: "", 
                              location: "",
+                             staggerOffset: 0,
                              entryOrder: patientEntryCounter++ 
                         });
                     });
@@ -607,10 +620,14 @@
             const equityFactor = parseInt(document.getElementById('equitySlider').value) / 100;
             const clusterVal = parseInt(document.getElementById('clusterSlider').value);
             const useTimeBlocking = document.getElementById('timeBlockingToggle').checked;
+            const useStagger = document.getElementById('staggerToggle').checked;
             
             // Map 0-100 to discount (e.g. 15 -> 0.15 discount -> 0.85 multiplier)
             const clusterDiscount = clusterVal / 100;
             const clusterMultiplier = 1.0 - clusterDiscount;
+
+            // Clear previous stagger
+            patients.forEach(p => p.staggerOffset = 0);
 
             // 2. Init Calculations
             let totalBurden = 0;
@@ -673,7 +690,7 @@
                 let hourlyBurden = new Array(totalHoursInt).fill(0);
                 patients.forEach(p => {
                     for (let h = 0; h < totalHoursInt; h++) {
-                        if (isCheckDue(p.freq, h)) hourlyBurden[h]++;
+                        if (isCheckDue(p.freq, h, p)) hourlyBurden[h]++;
                     }
                 });
 
@@ -707,8 +724,17 @@
                     }
                 });
                 
-                // Note: We skip greedy patient assignment here because 
-                // in Block Mode, patients belong to time, not doctors.
+                // Apply Staggering (Global Round Robin)
+                if (useStagger) {
+                    const byFreq = { 2: [], 4: [], 8: [] };
+                    patients.forEach(p => { if(byFreq[p.freq]) byFreq[p.freq].push(p); });
+                    
+                    [2, 4, 8].forEach(f => {
+                         // Sort by entry order to keep consistent
+                         byFreq[f].sort((a,b) => (a.entryOrder||0) - (b.entryOrder||0));
+                         byFreq[f].forEach((p, i) => p.staggerOffset = i % f);
+                    });
+                }
             } 
             else {
                 // --- NORMAL MODE (Greedy Patient Assignment) ---
@@ -756,6 +782,18 @@
                     target.burdenLoad += getBurden(p);
                     target.simulatedLoad += getCheckCountForDoc(p, target);
                 });
+
+                // Apply Staggering (Per-Doctor Round Robin)
+                if (useStagger) {
+                    Object.values(assignment).forEach(doc => {
+                         const byFreq = { 2: [], 4: [], 8: [] };
+                         doc.patients.forEach(p => { if(byFreq[p.freq]) byFreq[p.freq].push(p); });
+                         [2, 4, 8].forEach(f => {
+                             byFreq[f].sort((a,b) => (a.entryOrder||0) - (b.entryOrder||0)); // stable sort
+                             byFreq[f].forEach((p, i) => p.staggerOffset = i % f);
+                         });
+                    });
+                }
             }
 
             // 6. Run Simulation to determine Coverage/Block Assignments
@@ -835,7 +873,7 @@
                 
                 sourcePatients.forEach(p => {
                     for (let h = 0; h < totalHoursInt; h++) {
-                        if (isCheckDue(p.freq, h)) {
+                        if (isCheckDue(p.freq, h, p)) {
                             allTasks.push({ patient: p, primaryDoc: primaryDoc, hour: h });
                         }
                     }
@@ -849,7 +887,7 @@
                 allTasks = [];
                 patients.forEach(p => {
                     for (let h = 0; h < totalHoursInt; h++) {
-                        if (isCheckDue(p.freq, h)) {
+                        if (isCheckDue(p.freq, h, p)) {
                             // Primary doc doesn't matter in block mode
                             allTasks.push({ patient: p, primaryDoc: null, hour: h });
                         }
@@ -1483,24 +1521,33 @@
             return totalMins / 60;
         }
 
-        function isCheckDue(freq, hourIndex) {
-            let offset = 0;
-            if (freq === 8) offset = q8Offset;
-            else if (freq === 4) offset = q4Offset;
-            else if (freq === 2) offset = q2Offset;
+        function isCheckDue(freq, hourIndex, patient = null) {
+            let globalOffset = 0;
+            if (freq === 8) globalOffset = q8Offset;
+            else if (freq === 4) globalOffset = q4Offset;
+            else if (freq === 2) globalOffset = q2Offset;
+            
+            // Apply Stagger if enabled
+            let specificOffset = 0;
+            const useStagger = document.getElementById('staggerToggle') && document.getElementById('staggerToggle').checked;
+            if (useStagger && patient && patient.staggerOffset !== undefined) {
+                specificOffset = patient.staggerOffset;
+            }
+
+            let totalOffset = (globalOffset + specificOffset) % freq;
             
             // Check if hour is before the start offset (unlikely given selectors, but good for safety)
-            if (hourIndex < offset) return false;
+            if (hourIndex < totalOffset) return false;
             
             // Check modulo
-            return (hourIndex - offset) % freq === 0;
+            return (hourIndex - totalOffset) % freq === 0;
         }
 
         function getCheckCountForDoc(patient, doc) {
             let count = 0;
             const totalHoursInt = Math.ceil(shiftHours);
             for (let h = 0; h < totalHoursInt; h++) {
-                if (isCheckDue(patient.freq, h) && isDoctorAvailableAtHour(doc, h)) {
+                if (isCheckDue(patient.freq, h, patient) && isDoctorAvailableAtHour(doc, h)) {
                     count++;
                 }
             }
@@ -1511,7 +1558,7 @@
             let count = 0;
             const totalHoursInt = Math.ceil(shiftHours);
             for (let h = 0; h < totalHoursInt; h++) {
-                if (isCheckDue(patient.freq, h)) {
+                if (isCheckDue(patient.freq, h, patient)) {
                     count++;
                 }
             }
@@ -1628,6 +1675,7 @@
                                     freq: currentQ,
                                     location: pLoc,
                                     pref: pPref,
+                                    staggerOffset: 0,
                                     entryOrder: patientEntryCounter++
                                 });
                             }
