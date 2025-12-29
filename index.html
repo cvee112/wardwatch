@@ -8,11 +8,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
+        /* --- GLOBAL STYLES --- */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
+        
+        /* --- COMPONENTS --- */
         .card { background: white; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .fade-in { animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
+        /* --- UTILITIES --- */
         .patient-list-scroll::-webkit-scrollbar { width: 6px; }
         .patient-list-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
         .patient-list-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
@@ -21,9 +24,7 @@
         .timeline-line::before {
             content: '';
             position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 15px;
+            top: 0; bottom: 0; left: 15px;
             width: 2px;
             background: #e2e8f0;
             z-index: 0;
@@ -48,19 +49,17 @@
             opacity: 0;
             transition: opacity 0.3s, bottom 0.3s;
         }
-        #toast.show {
-            visibility: visible;
-            opacity: 1;
-            bottom: 50px;
-        }
-        
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
         #importModal { background-color: rgba(0,0,0,0.5); }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body class="p-4 md:p-6 relative">
 
     <div class="max-w-full mx-auto">
         
+        <!-- HEADER -->
         <header class="mb-8 flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-slate-200">
             <div class="text-center md:text-left mb-4 md:mb-0">
                 <h1 class="text-2xl font-bold text-slate-800"><i class="fa-solid fa-heart-pulse text-red-500"></i> EquiRound</h1>
@@ -71,9 +70,13 @@
             </button>
         </header>
 
+        <!-- MAIN CONFIG GRID -->
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
             
+            <!-- COLUMN 1: CONFIG & DOCTORS -->
             <div class="space-y-6 lg:col-span-1">
+                
+                <!-- 1. SHIFT CONFIG -->
                 <div class="card p-5 border-l-4 border-blue-500">
                     <h2 class="text-xl font-bold mb-4 text-slate-700">1. Shift & Q8 Config</h2>
                     <div class="space-y-4">
@@ -107,7 +110,7 @@
 
                         <div class="text-sm text-slate-500 font-semibold border-t pt-2" id="durationDisplay">Duration: 12 Hours</div>
                         
-                        <!-- SLIDER SECTION -->
+                        <!-- DISTRIBUTION LOGIC SLIDER -->
                         <div class="mt-4 pt-4 border-t border-slate-200">
                             <label class="block text-sm font-bold text-slate-700 mb-2">Distribution Logic</label>
                             <input type="range" id="equitySlider" min="0" max="100" value="100" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" oninput="updateEquityDisplay()">
@@ -131,6 +134,7 @@
                     </div>
                 </div>
 
+                <!-- 2. DOCTOR CONFIG -->
                 <div class="card p-5 border-l-4 border-green-500">
                     <h2 class="text-xl font-bold mb-4 text-slate-700">2. Doctors & Availability</h2>
                     <div class="flex gap-2 mb-3">
@@ -141,13 +145,18 @@
                 </div>
             </div>
 
+            <!-- COLUMN 2-4: PATIENTS & LOCATIONS -->
             <div class="lg:col-span-3 space-y-6">
+                
+                <!-- 3. PATIENT CATEGORIES -->
                 <div class="h-auto">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-xl font-bold text-slate-700">3. Patient Categories (Frequency)</h2>
                         <span class="text-sm bg-purple-100 text-purple-800 py-1 px-3 rounded-full font-bold" id="patientCountBadge">0 Patients</span>
                     </div>
+                    <!-- FREQUENCY COLUMNS -->
                     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                        <!-- Q1 -->
                         <div class="bg-red-50 border border-red-200 rounded-lg flex flex-col h-80">
                             <div class="p-3 bg-red-100 border-b border-red-200 rounded-t-lg">
                                 <h3 class="font-bold text-red-800 flex justify-between items-center">Q1 (Hourly) <span class="text-xs bg-white text-red-600 px-2 py-0.5 rounded-full" id="count-q1">0</span></h3>
@@ -155,6 +164,7 @@
                             </div>
                             <div class="flex-1 overflow-y-auto p-2 space-y-2 patient-list-scroll" id="list-q1"></div>
                         </div>
+                        <!-- Q2 -->
                         <div class="bg-orange-50 border border-orange-200 rounded-lg flex flex-col h-80">
                             <div class="p-3 bg-orange-100 border-b border-orange-200 rounded-t-lg">
                                 <h3 class="font-bold text-orange-800 flex justify-between items-center">Q2 (Every 2h) <span class="text-xs bg-white text-orange-600 px-2 py-0.5 rounded-full" id="count-q2">0</span></h3>
@@ -162,6 +172,7 @@
                             </div>
                             <div class="flex-1 overflow-y-auto p-2 space-y-2 patient-list-scroll" id="list-q2"></div>
                         </div>
+                        <!-- Q4 -->
                         <div class="bg-blue-50 border border-blue-200 rounded-lg flex flex-col h-80">
                             <div class="p-3 bg-blue-100 border-b border-blue-200 rounded-t-lg">
                                 <h3 class="font-bold text-blue-800 flex justify-between items-center">Q4 (Every 4h) <span class="text-xs bg-white text-blue-600 px-2 py-0.5 rounded-full" id="count-q4">0</span></h3>
@@ -169,6 +180,7 @@
                             </div>
                             <div class="flex-1 overflow-y-auto p-2 space-y-2 patient-list-scroll" id="list-q4"></div>
                         </div>
+                        <!-- Q8 -->
                         <div class="bg-green-50 border border-green-200 rounded-lg flex flex-col h-80">
                             <div class="p-3 bg-green-100 border-b border-green-200 rounded-t-lg">
                                 <h3 class="font-bold text-green-800 flex justify-between items-center">Q8 (Every 8h) <span class="text-xs bg-white text-green-600 px-2 py-0.5 rounded-full" id="count-q8">0</span></h3>
@@ -179,6 +191,7 @@
                     </div>
                 </div>
 
+                <!-- 4. LOCATION CONFIG -->
                 <div class="card p-5 border-l-4 border-indigo-500">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-xl font-bold text-slate-700">4. Patient Locations</h2>
@@ -193,12 +206,19 @@
             </div>
         </div>
 
+        <!-- ACTION BUTTONS -->
         <div class="flex flex-col md:flex-row justify-center items-center gap-4 my-8">
-            <button onclick="copyInputs()" class="bg-white text-slate-600 border border-slate-300 text-lg font-bold py-3 px-8 rounded-full shadow-sm hover:bg-slate-50 transform transition hover:scale-105 active:scale-95"><i class="fa-solid fa-clipboard-list mr-2"></i> Copy Inputs</button>
-            <button onclick="calculateDistribution()" class="bg-slate-800 text-white text-xl font-bold py-3 px-12 rounded-full shadow-lg hover:bg-slate-900 transform transition hover:scale-105 active:scale-95"><i class="fa-solid fa-calculator mr-2"></i> Generate Schedule</button>
+            <button onclick="copyInputs()" class="bg-white text-slate-600 border border-slate-300 text-lg font-bold py-3 px-8 rounded-full shadow-sm hover:bg-slate-50 transform transition hover:scale-105 active:scale-95">
+                <i class="fa-solid fa-clipboard-list mr-2"></i> Copy Inputs
+            </button>
+            <button onclick="calculateDistribution()" class="bg-slate-800 text-white text-xl font-bold py-3 px-12 rounded-full shadow-lg hover:bg-slate-900 transform transition hover:scale-105 active:scale-95">
+                <i class="fa-solid fa-calculator mr-2"></i> Generate Schedule
+            </button>
         </div>
 
+        <!-- RESULTS SECTION -->
         <div id="resultsSection" class="hidden animate-fade-in pb-10">
+            <!-- RESULTS HEADER -->
             <div class="flex flex-col md:flex-row justify-between items-end border-b pb-4 mb-6">
                 <h2 class="text-2xl font-bold text-slate-800">Generation Results</h2>
                 <div class="flex flex-wrap bg-slate-200 p-1 rounded-lg mt-4 md:mt-0 gap-1 items-center">
@@ -210,6 +230,7 @@
                 </div>
             </div>
             
+            <!-- STATS CARDS -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                  <div class="bg-white p-4 rounded shadow border-l-4 border-yellow-400">
                      <div class="text-slate-500 text-sm">Avg Checks per Avail Hr</div>
@@ -225,25 +246,31 @@
                 </div>
             </div>
 
+            <!-- VIEWS -->
             <div id="viewCardContainer"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="assignmentGrid"></div></div>
+            
             <div id="viewTableContainer" class="hidden">
                 <div class="bg-white rounded-lg shadow overflow-hidden border border-slate-200">
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm text-left text-slate-600">
                             <thead class="text-xs text-slate-700 uppercase bg-slate-50 border-b">
-                                <!-- Headers injected by JS -->
+                                <!-- Headers injected dynamically -->
                             </thead>
                             <tbody id="summaryTableBody" class="divide-y divide-slate-100"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
+            
             <div id="viewTimelineContainer" class="hidden">
-                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200"><div id="timelineContent" class="space-y-0 relative timeline-line"></div></div>
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <div id="timelineContent" class="space-y-0 relative timeline-line"></div>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- MODAL & TOAST -->
     <div id="importModal" class="fixed inset-0 hidden items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-2xl mx-4">
             <h2 class="text-xl font-bold mb-4 text-slate-800">Import Configuration</h2>
@@ -258,8 +285,20 @@
 
     <div id="toast">Copied to clipboard!</div>
 
+    <!-- MAIN SCRIPT -->
     <script>
-        // --- DATA STATE ---
+        /**
+         * EQUIROUND CORE JAVASCRIPT
+         * Sections:
+         * 1. Global State & Constants
+         * 2. Initialization & Events
+         * 3. Data Management (Doctors, Locations, Patients)
+         * 4. Algorithms (Distribution, Simulation)
+         * 5. Rendering & UI
+         * 6. Utilities
+         */
+
+        // --- 1. GLOBAL STATE & CONSTANTS ---
         let doctors = [];
         let patients = []; 
         let locations = [
@@ -270,25 +309,37 @@
             { id: 5, name: 'Right Peripheral' },
             { id: 6, name: 'Isolation Room' }
         ];
+        
+        // Configuration State
         let shiftHours = 12;
         let q8Offset = 0; 
-        let patientEntryCounter = 0; // Tracks order of entry
+        let patientEntryCounter = 0; // Ensures stable sort order for patients
         
+        // Result State
         let currentAssignment = null;
-        let currentSchedule = null; // Store simulated schedule
+        let currentSchedule = null;
         let currentView = 'card';
+        
+        // UI State
+        let expandedDocIds = new Set(); // Tracks open accordions
 
-        // --- DOM ELEMENTS ---
-        const docListEl = document.getElementById('docList');
-        const locGridEl = document.getElementById('locationGrid');
+        // --- 2. INITIALIZATION & EVENTS ---
+        
+        function init() {
+            // Bind config inputs
+            document.getElementById('startTime').addEventListener('change', updateDuration);
+            document.getElementById('endTime').addEventListener('change', updateDuration);
+            document.getElementById('q8Offset').addEventListener('change', updateDuration);
+            
+            // Initial render
+            updateDuration();
+            renderLocations();
+        }
 
-        // --- INITIALIZATION ---
-        document.getElementById('startTime').addEventListener('change', updateDuration);
-        document.getElementById('endTime').addEventListener('change', updateDuration);
-        document.getElementById('q8Offset').addEventListener('change', updateDuration);
-        updateDuration();
-        renderLocations();
+        // Call init immediately
+        init();
 
+        // UI Updates for Sliders
         function updateEquityDisplay() {
             const val = document.getElementById('equitySlider').value;
             const text = val == 100 ? "Respect Availability: 100%" : 
@@ -316,22 +367,886 @@
             display.innerText = text;
         }
 
-        // --- HELPER: TIME MATH ---
+        // --- 3. DATA MANAGEMENT ---
+
+        function addDoctor() {
+            const nameInput = document.getElementById('newDocName');
+            const name = nameInput.value.trim();
+            if (!name) return;
+            if (doctors.find(d => d.name === name)) { alert('Doctor already exists!'); return; }
+            doctors.push({ id: Date.now(), name: name, ranges: [] });
+            nameInput.value = '';
+            renderAll();
+        }
+
+        function removeDoctor(name) {
+            doctors = doctors.filter(d => d.name !== name);
+            patients.forEach(p => { if (p.pref === name) p.pref = ""; });
+            renderAll();
+        }
+
+        function addRange(docId) {
+            const sVal = document.getElementById(`start-${docId}`).value;
+            const eVal = document.getElementById(`end-${docId}`).value;
+            if(!sVal || !eVal) return;
+            const doc = doctors.find(d => d.id === docId);
+            if(doc) {
+                doc.ranges.push({start: sVal, end: eVal});
+                renderDoctors();
+            }
+        }
+
+        function removeRange(docId, index) {
+            const doc = doctors.find(d => d.id === docId);
+            if(doc) {
+                doc.ranges.splice(index, 1);
+                renderDoctors();
+            }
+        }
+
+        // Locations
+        function addNewLocation() {
+            const input = document.getElementById('newLocInput');
+            const newName = input.value;
+            if (newName && newName.trim()) {
+                locations.push({ id: Date.now(), name: newName.trim() });
+                renderLocations();
+                input.value = '';
+                input.focus();
+            }
+        }
+
+        function removeLocation(id) {
+            locations = locations.filter(l => l.id !== id);
+            renderLocations();
+        }
+
+        function updateLocationName(id, newName) {
+            const loc = locations.find(l => l.id === id);
+            if (loc) { loc.name = newName; }
+        }
+
+        // Patients
+        function handlePatientInput(event, freq) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                const input = event.target;
+                const rawValue = input.value;
+                const names = rawValue.split(/[\n,]+/).map(n => n.trim()).filter(n => n);
+                if (names.length > 0) {
+                    names.forEach(name => {
+                         patients.push({ 
+                             id: Date.now() + Math.random(), 
+                             name: name, 
+                             freq: parseInt(freq), 
+                             pref: "", 
+                             location: "",
+                             entryOrder: patientEntryCounter++ 
+                        });
+                    });
+                    renderAll();
+                    input.value = '';
+                }
+            }
+        }
+
+        function removePatient(id) {
+            patients = patients.filter(p => p.id !== id);
+            renderAll();
+        }
+
+        function updatePatientPref(id, newPref) {
+            const p = patients.find(pat => pat.id === id);
+            if (p) { p.pref = newPref; renderAll(); }
+        }
+
+        function removeLocationFromPatient(patientId) {
+            const p = patients.find(pat => pat.id === patientId);
+            if (p) { p.location = ""; renderAll(); }
+        }
+
+        function handleLocationInput(event, locName) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                const input = event.target;
+                const rawValue = input.value;
+                const namesToMatch = rawValue.split(/[\n,]+/).map(n => n.trim().toLowerCase()).filter(n => n);
+                
+                if (namesToMatch.length > 0) {
+                    let matchCount = 0;
+                    patients.forEach(p => {
+                        if (namesToMatch.includes(p.name.toLowerCase())) {
+                            p.location = locName;
+                            matchCount++;
+                        }
+                    });
+                    if(matchCount === 0) {
+                        alert("No matching patients found. Ensure exact name match.");
+                    } else {
+                        renderAll(); 
+                        input.value = '';
+                    }
+                }
+            }
+        }
+
+        function handleDocPrefInput(event, docName, docId) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                const input = event.target;
+                const rawValue = input.value;
+                const namesToMatch = rawValue.split(/[\n,]+/).map(n => n.trim().toLowerCase()).filter(n => n);
+                
+                if (namesToMatch.length > 0) {
+                    let matchCount = 0;
+                    patients.forEach(p => {
+                        if (namesToMatch.includes(p.name.toLowerCase())) {
+                            p.pref = docName;
+                            matchCount++;
+                        }
+                    });
+                    if(matchCount === 0) alert("No matching patients found.");
+                    else { 
+                        renderAll(); 
+                        // Restore Focus
+                        setTimeout(() => {
+                            const newInput = document.getElementById(`pref-input-${docId}`);
+                            if(newInput) {
+                                newInput.focus();
+                                newInput.value = '';
+                            }
+                        }, 0);
+                    }
+                }
+            }
+        }
+
+        function removePrefFromDoc(patientId) {
+            const p = patients.find(pat => pat.id === patientId);
+            if(p) { p.pref = ""; renderAll(); }
+        }
+
+        // --- 4. ALGORITHMS ---
+
+        /**
+         * Core Distribution Logic
+         * Balances Primary Patient Assignment based on "Phantom Load" theory.
+         */
+        function calculateDistribution() {
+            if (doctors.length === 0) { alert("Please add doctors."); return; }
+            if (patients.length === 0) { alert("Please add patients."); return; }
+            
+            // 1. Get Settings
+            const equityFactor = parseInt(document.getElementById('equitySlider').value) / 100;
+            const clusterVal = parseInt(document.getElementById('clusterSlider').value);
+            
+            // Map 0-100 to discount (e.g. 15 -> 0.15 discount -> 0.85 multiplier)
+            const clusterDiscount = clusterVal / 100;
+            const clusterMultiplier = 1.0 - clusterDiscount;
+
+            // 2. Init Calculations
+            let totalBurden = 0;
+            patients.forEach(p => totalBurden += getBurden(p));
+
+            // 3. Concurrency / Uniqueness Scoring
+            // Determine how "scarce" a doctor is. High score = working solo/late.
+            const totalHoursInt = Math.ceil(shiftHours);
+            let hourlyCounts = new Array(totalHoursInt).fill(0);
+            
+            doctors.forEach(d => {
+                d.availHours = getDoctorAvailableHours(d); 
+                for(let h=0; h<totalHoursInt; h++) {
+                    if(isDoctorAvailableAtHour(d, h)) hourlyCounts[h]++;
+                }
+            });
+
+            // Calculate Coverage Score (Squared Weighting for Scarcity)
+            let totalCoverageScore = 0;
+            doctors.forEach(d => {
+                d.coverageScore = 0;
+                for(let h=0; h<totalHoursInt; h++) {
+                    if(isDoctorAvailableAtHour(d, h)) {
+                        let count = hourlyCounts[h];
+                        if(count > 0) d.coverageScore += Math.pow(1.0 / count, 2);
+                    }
+                }
+                totalCoverageScore += d.coverageScore;
+            });
+
+            // 4. Initialize Assignment Objects with Phantom Load
+            let assignment = {};
+            doctors.forEach(d => { 
+                // Coefficient Tuning:
+                // Incoming (0.85): Long-shift/Solo doctors act as "Coverage Buckets".
+                // Debt (0.15): Short-shift doctors create work. Low penalty allows more primary assignment.
+                
+                let coverageRatio = totalCoverageScore > 0 ? d.coverageScore / totalCoverageScore : 0;
+                const incomingLoad = totalBurden * 0.85 * coverageRatio;
+
+                const debtRatio = shiftHours > 0 ? (1.0 - (d.availHours / shiftHours)) : 0;
+                const debtLoad = totalBurden * 0.15 * debtRatio;
+
+                // Phantom Load only applies when aiming for Equal Totals (equityFactor < 1)
+                const phantomLoad = (incomingLoad + debtLoad) * (1 - equityFactor);
+
+                assignment[d.name] = { 
+                    ...d, 
+                    patients: [], 
+                    activeLoad: 0, 
+                    burdenLoad: 0,
+                    simulatedLoad: phantomLoad 
+                }; 
+            });
+
+            // 5. Assign Primary Patients (Greedy Best Fit)
+            let unassigned = [...patients];
+
+            // Sort by burden (descending) to place heavy patients first
+            unassigned.sort(() => Math.random() - 0.5);
+            unassigned.sort((a, b) => getBurden(b) - getBurden(a));
+
+            unassigned.forEach(p => {
+                let docObjects = Object.values(assignment);
+                
+                docObjects.sort((a, b) => {
+                    const costA = getCheckCountForDoc(p, a);
+                    const costB = getCheckCountForDoc(p, b);
+
+                    // Effective Capacity Scaling
+                    const capA = (a.availHours * equityFactor) + (1 * (1 - equityFactor));
+                    const capB = (b.availHours * equityFactor) + (1 * (1 - equityFactor));
+                    const safeCapA = Math.max(capA, 0.1);
+                    const safeCapB = Math.max(capB, 0.1);
+
+                    // Score: (Handicap + Allocated + NewCost) / Capacity
+                    let scoreA = (a.simulatedLoad + costA) / safeCapA;
+                    let scoreB = (b.simulatedLoad + costB) / safeCapB;
+
+                    // Preference Bonus
+                    const prefBonus = 0.6 + (0.39 * (1 - equityFactor));
+                    
+                    if (p.pref === a.name) scoreA *= prefBonus;
+                    if (p.pref === b.name) scoreB *= prefBonus;
+
+                    // Clustering Bonus
+                    const hasLocA = a.patients.some(existing => existing.location === p.location);
+                    const hasLocB = b.patients.some(existing => existing.location === p.location);
+                    
+                    if (hasLocA) scoreA *= clusterMultiplier; 
+                    if (hasLocB) scoreB *= clusterMultiplier;
+
+                    return scoreA - scoreB;
+                });
+                
+                let target = docObjects[0];
+                target.patients.push(p);
+                target.burdenLoad += getBurden(p);
+                target.simulatedLoad += getCheckCountForDoc(p, target);
+            });
+
+            // 6. Run Simulation to determine Coverage Assignments
+            const simulation = simulateSchedule(assignment);
+            
+            // 7. Update Real Active Stats
+            Object.keys(assignment).forEach(k => {
+                assignment[k].activeLoad = simulation.stats[k].active;
+            });
+            
+            // 8. Commit & Render
+            currentAssignment = assignment;
+            currentSchedule = simulation.schedule; 
+
+            renderResults(assignment);
+            renderSummaryTable(assignment);
+            renderTimeline(assignment); 
+            
+            document.getElementById('resultsSection').classList.remove('hidden');
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        /**
+         * Simulation Logic
+         * Runs hour-by-hour to determine who covers whom.
+         * Uses "Decision Load" (Projected Total) to intelligently assign coverage.
+         */
+        function simulateSchedule(assignment) {
+            const docKeys = Object.keys(assignment);
+            const totalHoursInt = Math.ceil(shiftHours);
+            const equityFactor = parseInt(document.getElementById('equitySlider').value) / 100;
+            
+            let simStats = {};
+            let decisionLoad = {}; // Tracks Projected Total Load
+
+            docKeys.forEach(k => {
+                simStats[k] = { active: 0, hourlyLoad: new Array(totalHoursInt).fill(0) };
+                decisionLoad[k] = assignment[k].simulatedLoad || 0;
+            });
+
+            // Create flat task list
+            let allTasks = [];
+            Object.values(assignment).forEach(primaryDoc => {
+                primaryDoc.patients.forEach(p => {
+                    for (let h = 0; h < totalHoursInt; h++) {
+                        let isDue = false;
+                        if (p.freq === 8) { if (h >= q8Offset && (h - q8Offset) % 8 === 0) isDue = true; }
+                        else { if (h % p.freq === 0) isDue = true; }
+                        
+                        if(isDue) allTasks.push({ patient: p, primaryDoc: primaryDoc, hour: h });
+                    }
+                });
+            });
+
+            allTasks.sort((a,b) => a.hour - b.hour);
+
+            let hourlyPlan = []; 
+
+            // Process Hour-by-Hour
+            for (let h = 0; h < totalHoursInt; h++) {
+                let hourTasks = allTasks.filter(t => t.hour === h);
+                let hourAssignments = {};
+                let pending = [];
+                
+                hourTasks.forEach(t => {
+                    // Try Primary
+                    if (isDoctorAvailableAtHour(t.primaryDoc, h)) {
+                        simStats[t.primaryDoc.name].active++;
+                        simStats[t.primaryDoc.name].hourlyLoad[h]++;
+                        
+                        if(!hourAssignments[t.primaryDoc.name]) hourAssignments[t.primaryDoc.name] = [];
+                        hourAssignments[t.primaryDoc.name].push({ ...t, isCoverage: false });
+                    } else {
+                        pending.push(t);
+                    }
+                });
+
+                // Assign Coverage
+                pending.forEach(t => {
+                    let availableDocs = docKeys.filter(name => isDoctorAvailableAtHour(assignment[name], h));
+                    
+                    if (availableDocs.length === 0) {
+                        let key = "UNASSIGNED";
+                        if(!hourAssignments[key]) hourAssignments[key] = [];
+                        hourAssignments[key].push({ ...t, isCoverage: false, unassigned: true });
+                    } else {
+                        // Intelligent Sorting: Least Busy relative to Capacity Goal
+                        availableDocs.sort((a,b) => {
+                            const capA = (assignment[a].availHours * equityFactor) + (1 * (1 - equityFactor));
+                            const capB = (assignment[b].availHours * equityFactor) + (1 * (1 - equityFactor));
+                            const safeCapA = Math.max(capA, 0.1);
+                            const safeCapB = Math.max(capB, 0.1);
+
+                            const metricA = decisionLoad[a] / safeCapA;
+                            const metricB = decisionLoad[b] / safeCapB;
+                            
+                            if (Math.abs(metricA - metricB) < 0.05) {
+                                return simStats[a].active - simStats[b].active;
+                            }
+                            return metricA - metricB;
+                        });
+
+                        let coverDocName = availableDocs[0];
+                        simStats[coverDocName].active++;
+                        simStats[coverDocName].hourlyLoad[h]++;
+                        decisionLoad[coverDocName]++; // Increment projected load
+                        
+                        if(!hourAssignments[coverDocName]) hourAssignments[coverDocName] = [];
+                        hourAssignments[coverDocName].push({ ...t, isCoverage: true });
+                    }
+                });
+                
+                hourlyPlan.push(hourAssignments);
+            }
+
+            return { stats: simStats, schedule: hourlyPlan };
+        }
+
+        // --- 5. RENDERING & UI ---
+
+        function renderAll() {
+            renderDoctors();
+            renderPatientLists();
+            renderLocations();
+        }
+
+        function renderDoctors() {
+            const docListEl = document.getElementById('docList');
+            docListEl.innerHTML = '';
+            doctors.forEach((d, index) => {
+                const prefs = patients.filter(p => p.pref === d.name);
+                const card = document.createElement('div');
+                card.className = "bg-white border rounded shadow-sm text-sm overflow-hidden transition-all";
+                const header = document.createElement('div');
+                header.className = "p-3 flex justify-between items-center bg-slate-50 cursor-pointer hover:bg-slate-100";
+                
+                let rangeText = "";
+                if(d.ranges.length > 0) {
+                    rangeText = `<span class="text-xs text-green-600 bg-green-50 border border-green-200 rounded px-1 ml-1">${d.ranges.length} Ranges</span>`;
+                }
+
+                header.onclick = (e) => {
+                    if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON' && !e.target.closest('button')) 
+                        toggleDocAccordion(index);
+                };
+
+                // State Check
+                const isExpanded = expandedDocIds.has(d.id);
+                const bodyClass = isExpanded ? "max-h-96 border-t border-slate-100 bg-white" : "max-h-0 border-t border-slate-100 bg-white";
+                const arrowTransform = isExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
+
+                header.innerHTML = `
+                    <div class="flex items-center gap-2 font-medium text-slate-700">
+                        <i class="fa-solid fa-user-doctor text-slate-400"></i>
+                        ${d.name}
+                        ${prefs.length > 0 ? `<span class="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full">${prefs.length}</span>` : ''}
+                        ${rangeText}
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="toggleDocAccordion(${index}); event.stopPropagation();" class="text-slate-400 hover:text-blue-500" title="Set Availability"><i class="fa-regular fa-clock"></i></button>
+                        <i id="arrow-${index}" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform" style="transform: ${arrowTransform}"></i>
+                    </div>
+                `;
+
+                const body = document.createElement('div');
+                body.id = `doc-body-${index}`;
+                body.className = bodyClass; 
+                
+                let prefsHtml = prefs.map(p => `
+                    <span class="inline-flex items-center gap-1 bg-amber-50 text-amber-800 text-xs px-2 py-1 rounded border border-amber-100 mb-1">
+                        ${p.name} <span class="text-[10px] text-amber-400">(Q${p.freq})</span>
+                        <button onclick="removePrefFromDoc(${p.id})" class="hover:text-red-600 ml-1"><i class="fa-solid fa-times"></i></button>
+                    </span>
+                `).join('');
+
+                let rangesHtml = d.ranges.map((r, i) => `
+                    <div class="flex justify-between text-xs bg-slate-50 p-1 rounded border mb-1">
+                        <span>${r.start} - ${r.end}</span>
+                        <button onclick="removeRange(${d.id}, ${i})" class="text-red-400 hover:text-red-600 px-1">&times;</button>
+                    </div>
+                `).join('');
+
+                body.innerHTML = `
+                    <div class="p-3 space-y-4">
+                        <div class="bg-blue-50 p-2 rounded border border-blue-100">
+                            <div class="text-[10px] uppercase font-bold text-blue-500 mb-1">Availability (Default: Full Shift)</div>
+                            <div class="mb-2">${rangesHtml}</div>
+                            <div class="flex gap-1">
+                                <input type="time" id="start-${d.id}" class="w-1/2 p-1 text-xs border rounded">
+                                <input type="time" id="end-${d.id}" class="w-1/2 p-1 text-xs border rounded">
+                                <button onclick="addRange(${d.id})" class="bg-blue-500 text-white px-2 rounded text-xs"><i class="fa-solid fa-plus"></i></button>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] uppercase font-bold text-slate-400 mb-1">Preferred Patients</div>
+                            <div class="flex flex-wrap gap-1">
+                                ${prefsHtml || '<span class="text-xs text-slate-400 italic">None</span>'}
+                            </div>
+                            <textarea id="pref-input-${d.id}" placeholder="Bulk add pref names..." rows="2" class="w-full text-xs p-2 border rounded focus:ring-1 focus:ring-green-400 mt-1 resize-none" onkeydown="handleDocPrefInput(event, '${d.name}', ${d.id})"></textarea>
+                        </div>
+                        <div class="text-right pt-1"><button onclick="removeDoctor('${d.name}')" class="text-xs text-red-400 hover:text-red-600 underline">Remove Doctor</button></div>
+                    </div>
+                `;
+                card.appendChild(header);
+                card.appendChild(body);
+                docListEl.appendChild(card);
+            });
+        }
+
+        function toggleDocAccordion(index) {
+            const body = document.getElementById(`doc-body-${index}`);
+            const arrow = document.getElementById(`arrow-${index}`);
+            const doc = doctors[index];
+
+            if (body.classList.contains('max-h-0')) {
+                body.classList.remove('max-h-0');
+                body.classList.add('max-h-96');
+                arrow.style.transform = 'rotate(180deg)';
+                if(doc) expandedDocIds.add(doc.id);
+            } else {
+                body.classList.add('max-h-0');
+                body.classList.remove('max-h-96');
+                arrow.style.transform = 'rotate(0deg)';
+                if(doc) expandedDocIds.delete(doc.id);
+            }
+        }
+
+        function renderPatientLists() {
+            document.getElementById('patientCountBadge').innerText = `${patients.length} Patients`;
+            [1, 2, 4, 8].forEach(q => {
+                const listEl = document.getElementById(`list-q${q}`);
+                const countEl = document.getElementById(`count-q${q}`);
+                const qPatients = patients.filter(p => p.freq === q);
+                countEl.innerText = qPatients.length;
+                listEl.innerHTML = '';
+                qPatients.forEach(p => {
+                    let optionsHTML = `<option value="">No Pref</option>`;
+                    doctors.forEach(d => {
+                        const selected = p.pref === d.name ? 'selected' : '';
+                        optionsHTML += `<option value="${d.name}" ${selected}>${d.name}</option>`;
+                    });
+                    
+                    const borderClass = p.pref ? 'border-amber-300 bg-amber-50' : 'border-slate-200 bg-white';
+                    const locBadge = p.location 
+                        ? `<span class="text-[10px] bg-indigo-100 text-indigo-700 px-1 rounded ml-1 truncate max-w-[80px]">${p.location}</span>` 
+                        : '';
+
+                    const item = document.createElement('div');
+                    item.className = `${borderClass} p-2 rounded shadow-sm border flex flex-col gap-2 animate-fade-in`;
+                    item.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div class="flex flex-col truncate w-full">
+                                <span class="font-medium text-slate-800 text-sm truncate" title="${p.name}">${p.name}</span>
+                                ${locBadge ? `<div class="mt-0.5">${locBadge}</div>` : ''}
+                            </div>
+                            <button onclick="removePatient(${p.id})" class="text-slate-300 hover:text-red-500 ml-2"><i class="fa-solid fa-times"></i></button>
+                        </div>
+                        <select onchange="updatePatientPref(${p.id}, this.value)" class="w-full text-xs p-1 border rounded bg-white text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-300">
+                            ${optionsHTML}
+                        </select>
+                    `;
+                    listEl.appendChild(item);
+                });
+            });
+        }
+
+        function renderLocations() {
+            const locGridEl = document.getElementById('locationGrid');
+            locGridEl.innerHTML = '';
+            locations.forEach(loc => {
+                const locPatients = patients.filter(p => p.location === loc.name);
+                const count = locPatients.length;
+
+                let tagsHtml = locPatients.map(p => `
+                    <span class="inline-flex items-center gap-1 bg-indigo-100 text-indigo-800 text-[10px] px-2 py-1 rounded border border-indigo-200">
+                        ${p.name}
+                        <button onclick="removeLocationFromPatient(${p.id})" class="hover:text-red-600 ml-1 font-bold text-indigo-400 hover:bg-indigo-50 rounded-full w-3 h-3 flex items-center justify-center">&times;</button>
+                    </span>
+                `).join('');
+
+                const card = document.createElement('div');
+                card.className = "bg-indigo-50 border border-indigo-100 rounded p-3 flex flex-col gap-2 relative group";
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-1 pr-6">
+                        <input type="text" value="${loc.name}" 
+                            class="bg-transparent font-bold text-indigo-900 text-sm w-full focus:outline-none focus:border-b border-indigo-300"
+                            onchange="updateLocationName(${loc.id}, this.value)">
+                        <span class="bg-indigo-200 text-indigo-800 text-[10px] px-1.5 py-0.5 rounded-full font-mono whitespace-nowrap">${count}</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1 mb-1 max-h-24 overflow-y-auto patient-list-scroll">
+                        ${tagsHtml || '<span class="text-[10px] text-indigo-300 italic">No patients assigned</span>'}
+                    </div>
+                    <textarea rows="2" placeholder="Paste names to add..." 
+                        class="w-full text-xs p-1.5 border border-indigo-200 rounded focus:ring-1 focus:ring-indigo-400 resize-none bg-white mt-auto"
+                        onkeydown="handleLocationInput(event, '${loc.name}')"></textarea>
+                    
+                    <button onclick="removeLocation(${loc.id})" class="absolute top-1 right-1 text-indigo-300 hover:text-red-500 transition z-10 p-1">
+                        <i class="fa-solid fa-times-circle"></i>
+                    </button>
+                `;
+                locGridEl.appendChild(card);
+            });
+        }
+
+        function renderResults(assignment) {
+            const container = document.getElementById('assignmentGrid');
+            container.innerHTML = '';
+
+            const docs = Object.values(assignment);
+            const activeLoads = docs.map(d => d.activeLoad);
+            const totalActive = activeLoads.reduce((a,b)=>a+b, 0);
+            const totalHours = docs.reduce((a,b)=>a+b.availHours, 0);
+            const avgPerHr = totalHours > 0 ? (totalActive / totalHours).toFixed(2) : 0;
+
+            document.getElementById('avgLoadDisplay').innerText = avgPerHr;
+            document.getElementById('maxLoadDisplay').innerText = Math.max(...activeLoads);
+            document.getElementById('minLoadDisplay').innerText = Math.min(...activeLoads);
+
+            docs.forEach(d => {
+                // Sorting for Output: Location Index > Entry Order
+                d.patients.sort(patientComparator);
+
+                let pListHTML = d.patients.map(p => `
+                    <div class="flex justify-between items-center text-sm p-2 bg-slate-50 rounded mb-1 border-l-4 ${getQColor(p.freq)}">
+                        <div class="flex flex-col">
+                            <span>${p.name}</span>
+                            ${p.location ? `<span class="text-[10px] text-indigo-500 italic">${p.location}</span>` : ''}
+                        </div>
+                        <div class="flex items-center gap-1">
+                            ${p.pref ? '<i class="fa-solid fa-star text-xs text-amber-500"></i>' : ''}
+                            <span class="font-mono font-bold text-slate-500 text-xs">Q${p.freq}</span>
+                        </div>
+                    </div>
+                `).join('');
+
+                const card = document.createElement('div');
+                card.className = `card p-5 border-t-8 border-blue-500 fade-in`;
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800">${d.name}</h3>
+                            <div class="text-xs text-slate-400">Available: ${d.availHours.toFixed(1)}h</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xl font-bold text-slate-700">Act: ${d.activeLoad}</div>
+                            <div class="text-[10px] text-slate-400 uppercase">Burden: ${d.burdenLoad}</div>
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        ${pListHTML}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderSummaryTable(assignment) {
+            const table = document.querySelector('#viewTableContainer table');
+            const thead = table.querySelector('thead');
+            const tbody = document.getElementById('summaryTableBody');
+            
+            let headerHTML = `<tr><th class="px-6 py-3 font-bold text-slate-800 whitespace-nowrap bg-slate-50 sticky left-0 z-10 border-r">Doctor</th>`;
+            locations.forEach(l => {
+                headerHTML += `<th class="px-4 py-3 text-xs font-bold text-indigo-700 bg-indigo-50/50 text-center whitespace-nowrap border-r border-indigo-100">${l.name}</th>`;
+            });
+            headerHTML += `<th class="px-4 py-3 text-red-600 bg-red-50 text-center border-r border-red-100">Q1</th>
+                    <th class="px-4 py-3 text-orange-600 bg-orange-50 text-center border-r border-orange-100">Q2</th>
+                    <th class="px-4 py-3 text-blue-600 bg-blue-50 text-center border-r border-blue-100">Q4</th>
+                    <th class="px-4 py-3 text-green-600 bg-green-50 text-center border-r border-green-100">Q8</th>
+                    <th class="px-6 py-3 font-bold text-slate-800 bg-slate-100 text-right whitespace-nowrap">Active / Burden</th>
+                    <th class="px-6 py-3 font-bold text-slate-800 bg-slate-100 text-right whitespace-nowrap">Avail Hrs</th></tr>`;
+            thead.innerHTML = headerHTML;
+
+            tbody.innerHTML = '';
+            Object.values(assignment).forEach(doc => {
+                const q1 = doc.patients.filter(p => p.freq === 1).length;
+                const q2 = doc.patients.filter(p => p.freq === 2).length;
+                const q4 = doc.patients.filter(p => p.freq === 4).length;
+                const q8 = doc.patients.filter(p => p.freq === 8).length;
+                
+                let locCells = '';
+                locations.forEach(l => {
+                    const count = doc.patients.filter(p => p.location === l.name).length;
+                    const style = count > 0 ? "font-bold text-indigo-700 bg-indigo-50/30" : "text-slate-300 bg-white";
+                    locCells += `<td class="px-4 py-4 text-center border-r border-slate-100 text-xs ${style}">${count > 0 ? count : '-'}</td>`;
+                });
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 border-b last:border-0";
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-medium text-slate-900 whitespace-nowrap bg-white sticky left-0 border-r font-bold">${doc.name}</td>
+                    ${locCells}
+                    <td class="px-4 py-4 bg-red-50/10 font-mono text-red-700 font-bold text-center border-r border-slate-100">${q1}</td>
+                    <td class="px-4 py-4 bg-orange-50/10 font-mono text-orange-700 font-bold text-center border-r border-slate-100">${q2}</td>
+                    <td class="px-4 py-4 bg-blue-50/10 font-mono text-blue-700 font-bold text-center border-r border-slate-100">${q4}</td>
+                    <td class="px-4 py-4 bg-green-50/10 font-mono text-green-700 font-bold text-center border-r border-slate-100">${q8}</td>
+                    <td class="px-6 py-4 text-right font-bold text-lg bg-slate-50 whitespace-nowrap">${doc.activeLoad} <span class="text-xs font-normal text-slate-400">/ ${doc.burdenLoad}</span></td>
+                    <td class="px-6 py-4 text-right text-slate-500 whitespace-nowrap">${doc.availHours.toFixed(1)}h</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderTimeline(assignment) {
+            const container = document.getElementById('timelineContent');
+            container.innerHTML = '';
+            
+            const sTimeStr = document.getElementById('startTime').value;
+            const startHour = parseInt(sTimeStr.split(':')[0]);
+            const startMin = sTimeStr.split(':')[1];
+            
+            if (!currentSchedule) return;
+
+            currentSchedule.forEach((hourAssignments, i) => {
+                let currentH = (startHour + i) % 24;
+                let ampm = currentH >= 12 ? 'PM' : 'AM';
+                let displayH = currentH % 12;
+                if(displayH === 0) displayH = 12;
+                
+                const hourBlock = document.createElement('div');
+                hourBlock.className = "pl-8 pb-8 relative";
+                hourBlock.innerHTML = `
+                    <div class="absolute left-[6px] top-1 w-5 h-5 bg-slate-400 rounded-full border-4 border-white z-10 shadow-sm"></div>
+                    <h3 class="font-bold text-lg text-slate-700 mb-3">${displayH}:${startMin} ${ampm}</h3>
+                `;
+
+                if (Object.keys(hourAssignments).length === 0) {
+                    hourBlock.innerHTML += `<div class="text-slate-400 italic text-sm">No standard checks due.</div>`;
+                } else {
+                    const grid = document.createElement('div');
+                    grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3";
+                    
+                    Object.keys(hourAssignments).sort().forEach(docName => {
+                        const assignedTasks = hourAssignments[docName];
+                        let isUnassigned = (docName === "UNASSIGNED");
+                        let cardClass = isUnassigned ? "bg-red-100 border-red-300" : "bg-slate-50 border-slate-200";
+                        let headerColor = isUnassigned ? "text-red-700" : "text-slate-800";
+
+                        // Group by Loc
+                        let locGroups = {};
+                        assignedTasks.forEach(t => {
+                            let loc = t.patient.location || "Unspecified";
+                            if(!locGroups[loc]) locGroups[loc] = [];
+                            locGroups[loc].push(t);
+                        });
+                        
+                        // Sort locations based on config order
+                        let sortedLocs = Object.keys(locGroups).sort(locationNameComparator);
+
+                        let innerHTML = '';
+                        sortedLocs.forEach(locName => {
+                            let locTasks = locGroups[locName];
+                            
+                            // Sort tasks within location
+                            locTasks.sort((a,b) => {
+                                const orderA = a.patient.entryOrder !== undefined ? a.patient.entryOrder : 99999;
+                                const orderB = b.patient.entryOrder !== undefined ? b.patient.entryOrder : 99999;
+                                return orderA - orderB;
+                            });
+                            
+                            innerHTML += `
+                                <div class="mb-2 last:mb-0">
+                                    <div class="text-[10px] font-bold text-indigo-600 uppercase border-b border-indigo-100 mb-1">${locName}</div>
+                                    ${locTasks.map(t => `
+                                        <div class="flex justify-between items-center text-xs py-1 border-b border-slate-50 last:border-0">
+                                            <div class="flex flex-col">
+                                                <span class="text-slate-700 font-medium">${t.patient.name}</span>
+                                                ${t.isCoverage ? `<span class="text-[9px] text-orange-600 font-bold">Covering (${t.primaryDoc.name})</span>` : ''}
+                                                ${t.unassigned ? `<span class="text-[9px] text-red-600 font-bold">Primary: ${t.primaryDoc.name}</span>` : ''}
+                                            </div>
+                                            <span class="font-mono font-bold ${getQTextColor(t.patient.freq)}">Q${t.patient.freq}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `;
+                        });
+
+                        const docCard = document.createElement('div');
+                        docCard.className = `${cardClass} border rounded p-3 shadow-sm`;
+                        docCard.innerHTML = `
+                            <div class="font-bold ${headerColor} text-sm mb-2 pb-1 border-b border-slate-200 flex justify-between">
+                                <div>${docName} <span class="bg-white text-slate-600 text-xs px-2 rounded-full border">${assignedTasks.length}</span></div>
+                            </div>
+                            <div class="space-y-0.5">${innerHTML}</div>
+                        `;
+                        grid.appendChild(docCard);
+                    });
+                    hourBlock.appendChild(grid);
+                }
+                container.appendChild(hourBlock);
+            });
+        }
+
+        // --- 6. UTILITIES & HELPERS ---
+
+        function updateDuration() {
+            const start = document.getElementById('startTime').value;
+            const end = document.getElementById('endTime').value;
+            q8Offset = parseInt(document.getElementById('q8Offset').value);
+
+            let sMins = timeToMinutes(start);
+            let eMins = timeToMinutes(end);
+            
+            if (eMins <= sMins) eMins += 24 * 60;
+            const diffMins = eMins - sMins;
+            shiftHours = diffMins / 60;
+            
+            document.getElementById('durationDisplay').innerText = `Duration: ${shiftHours.toFixed(1)} Hours`;
+
+            let q8Date = new Date(`01/01/2000 ${start}`);
+            q8Date.setHours(q8Date.getHours() + q8Offset);
+            let q8TimeStr = q8Date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            document.getElementById('q8StartTimeDisplay').innerText = `Starts at: ${q8TimeStr}`;
+        }
+
         function timeToMinutes(timeStr) {
             const parts = timeStr.split(':');
             return parseInt(parts[0]) * 60 + parseInt(parts[1]);
         }
 
-        // Returns {start: mins, end: mins} normalized to start of shift = 0
         function normalizeToShift(tStr, shiftStartMins) {
             let tMins = timeToMinutes(tStr);
-            if (tMins < shiftStartMins) {
-                tMins += 24 * 60;
-            }
+            if (tMins < shiftStartMins) tMins += 24 * 60;
             return tMins - shiftStartMins;
         }
 
-        // --- IMPORT FUNCTIONALITY ---
+        function isDoctorAvailableAtHour(doc, hourIndex) {
+            if (!doc.ranges || doc.ranges.length === 0) return true;
+            const shiftStartStr = document.getElementById('startTime').value;
+            const shiftStartMins = timeToMinutes(shiftStartStr);
+            const checkMinute = (hourIndex * 60) + 30; 
+
+            for(let r of doc.ranges) {
+                let startOffset = normalizeToShift(r.start, shiftStartMins);
+                let endOffset = normalizeToShift(r.end, shiftStartMins);
+                if (endOffset < startOffset) endOffset += 24*60; 
+                if (checkMinute >= startOffset && checkMinute < endOffset) return true;
+            }
+            return false;
+        }
+
+        function getDoctorAvailableHours(doc) {
+            if (!doc.ranges || doc.ranges.length === 0) return shiftHours;
+            const shiftStartStr = document.getElementById('startTime').value;
+            const shiftStartMins = timeToMinutes(shiftStartStr);
+            let totalMins = 0;
+
+            doc.ranges.forEach(r => {
+                let startOffset = normalizeToShift(r.start, shiftStartMins);
+                let endOffset = normalizeToShift(r.end, shiftStartMins);
+                if (endOffset <= startOffset) endOffset += 24*60;
+                totalMins += (endOffset - startOffset);
+            });
+            return totalMins / 60;
+        }
+
+        function getCheckCountForDoc(patient, doc) {
+            let count = 0;
+            const totalHoursInt = Math.ceil(shiftHours);
+            for (let h = 0; h < totalHoursInt; h++) {
+                let isDue = false;
+                if (patient.freq === 8) {
+                    if (h >= q8Offset && (h - q8Offset) % 8 === 0) isDue = true;
+                } else {
+                    if (h % patient.freq === 0) isDue = true;
+                }
+                if (isDue && isDoctorAvailableAtHour(doc, h)) count++;
+            }
+            return count;
+        }
+
+        function getBurden(patient) {
+            let count = 0;
+            const totalHoursInt = Math.ceil(shiftHours);
+            for (let h = 0; h < totalHoursInt; h++) {
+                if (patient.freq === 8) {
+                    if (h >= q8Offset && (h - q8Offset) % 8 === 0) count++;
+                } else {
+                    if (h % patient.freq === 0) count++;
+                }
+            }
+            return count;
+        }
+
+        // Sorting Comparators
+        function patientComparator(a, b) {
+            const locIdxA = locations.findIndex(l => l.name === a.location);
+            const locIdxB = locations.findIndex(l => l.name === b.location);
+            
+            const safeIdxA = locIdxA === -1 ? 999 : locIdxA;
+            const safeIdxB = locIdxB === -1 ? 999 : locIdxB;
+
+            if (safeIdxA !== safeIdxB) return safeIdxA - safeIdxB;
+            return (a.entryOrder || 0) - (b.entryOrder || 0);
+        }
+
+        function locationNameComparator(a, b) {
+            const idxA = locations.findIndex(l => l.name === a);
+            const idxB = locations.findIndex(l => l.name === b);
+            const safeIdxA = idxA === -1 ? 999 : idxA;
+            const safeIdxB = idxB === -1 ? 999 : idxB;
+            return safeIdxA - safeIdxB;
+        }
+
+        // Import / Export
         function toggleImportModal() {
             const modal = document.getElementById('importModal');
             modal.classList.toggle('hidden');
@@ -358,7 +1273,6 @@
 
                 for (let line of lines) {
                     if(!line) continue;
-
                     if (line.startsWith('Shift:')) {
                         const parts = line.match(/Shift: (.*) to (.*)/);
                         if(parts) {
@@ -368,19 +1282,14 @@
                     } 
                     else if (line.startsWith('Q8 Offset:')) {
                         const parts = line.match(/\+(\d+)/);
-                        if(parts) {
-                            document.getElementById('q8Offset').value = parts[1];
-                        }
+                        if(parts) document.getElementById('q8Offset').value = parts[1];
                     }
                     else if (line.startsWith('DOCTORS')) { currentSection = 'doctors'; }
                     else if (line.startsWith('LOCATIONS')) { currentSection = 'locations'; }
                     else if (line.startsWith('PATIENT LIST')) { currentSection = 'patients'; }
-                    else if (line.match(/^\[Q\d\]/)) {
-                        currentQ = parseInt(line.replace(/\D/g, ''));
-                    }
+                    else if (line.match(/^\[Q\d\]/)) { currentQ = parseInt(line.replace(/\D/g, '')); }
                     else if (line.startsWith('- ')) {
                         const content = line.substring(2).trim();
-                        
                         if (currentSection === 'doctors') {
                             const parts = content.match(/^(.*?)(\s\[(.*)\])?$/);
                             if (parts) {
@@ -426,19 +1335,16 @@
                     }
                 }
 
-                // --- NEW: ENFORCE LOCATION ORDER ---
+                // Enforce Standard Location Order
                 const standardOrder = ['Aquarium', 'Left Peripheral', 'Left Central', 'Right Central', 'Right Peripheral', 'Isolation Room'];
                 locations.sort((a,b) => {
                     let idxA = standardOrder.indexOf(a.name);
                     let idxB = standardOrder.indexOf(b.name);
-                    // If not in standard list, put at the end
                     if (idxA === -1) idxA = 999;
                     if (idxB === -1) idxB = 999;
-                    
                     if (idxA !== idxB) return idxA - idxB;
                     return a.name.localeCompare(b.name);
                 });
-                // -----------------------------------
 
                 updateDuration();
                 renderAll();
@@ -450,910 +1356,6 @@
             }
         }
 
-        // --- CORE FUNCTIONS ---
-        function updateDuration() {
-            const start = document.getElementById('startTime').value;
-            const end = document.getElementById('endTime').value;
-            q8Offset = parseInt(document.getElementById('q8Offset').value);
-
-            let sMins = timeToMinutes(start);
-            let eMins = timeToMinutes(end);
-            
-            if (eMins <= sMins) eMins += 24 * 60;
-            
-            const diffMins = eMins - sMins;
-            shiftHours = diffMins / 60;
-            
-            document.getElementById('durationDisplay').innerText = `Duration: ${shiftHours.toFixed(1)} Hours`;
-
-            let q8Date = new Date(`01/01/2000 ${start}`);
-            q8Date.setHours(q8Date.getHours() + q8Offset);
-            let q8TimeStr = q8Date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            document.getElementById('q8StartTimeDisplay').innerText = `Starts at: ${q8TimeStr}`;
-        }
-
-        // --- DOCTOR MANAGEMENT ---
-        function addDoctor() {
-            const nameInput = document.getElementById('newDocName');
-            const name = nameInput.value.trim();
-            if (!name) return;
-            if (doctors.find(d => d.name === name)) { alert('Doctor already exists!'); return; }
-            doctors.push({ id: Date.now(), name: name, ranges: [] });
-            nameInput.value = '';
-            renderAll();
-        }
-
-        function removeDoctor(name) {
-            doctors = doctors.filter(d => d.name !== name);
-            patients.forEach(p => { if (p.pref === name) p.pref = ""; });
-            renderAll();
-        }
-
-        function addRange(docId) {
-            const sVal = document.getElementById(`start-${docId}`).value;
-            const eVal = document.getElementById(`end-${docId}`).value;
-            if(!sVal || !eVal) return;
-            const doc = doctors.find(d => d.id === docId);
-            if(doc) {
-                doc.ranges.push({start: sVal, end: eVal});
-                renderDoctors();
-            }
-        }
-
-        function removeRange(docId, index) {
-            const doc = doctors.find(d => d.id === docId);
-            if(doc) {
-                doc.ranges.splice(index, 1);
-                renderDoctors();
-            }
-        }
-
-        // --- LOCATION MANAGEMENT ---
-        function addNewLocation() {
-            const input = document.getElementById('newLocInput');
-            const newName = input.value;
-            if (newName && newName.trim()) {
-                locations.push({ id: Date.now(), name: newName.trim() });
-                renderLocations();
-                input.value = '';
-                input.focus();
-            }
-        }
-
-        function removeLocation(id) {
-            locations = locations.filter(l => l.id !== id);
-            renderLocations();
-        }
-
-        function updateLocationName(id, newName) {
-            const loc = locations.find(l => l.id === id);
-            if (loc) { loc.name = newName; }
-        }
-
-        function removeLocationFromPatient(patientId) {
-            const p = patients.find(pat => pat.id === patientId);
-            if (p) { p.location = ""; renderAll(); }
-        }
-
-        function handleLocationInput(event, locName) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                const input = event.target;
-                const rawValue = input.value;
-                const namesToMatch = rawValue.split(/[\n,]+/).map(n => n.trim().toLowerCase()).filter(n => n);
-                
-                if (namesToMatch.length > 0) {
-                    let matchCount = 0;
-                    patients.forEach(p => {
-                        if (namesToMatch.includes(p.name.toLowerCase())) {
-                            p.location = locName;
-                            matchCount++;
-                        }
-                    });
-                    if(matchCount === 0) {
-                        alert("No matching patients found. Ensure exact name match.");
-                    } else {
-                        renderAll(); 
-                        input.value = '';
-                    }
-                }
-            }
-        }
-
-        function renderLocations() {
-            locGridEl.innerHTML = '';
-            locations.forEach(loc => {
-                const locPatients = patients.filter(p => p.location === loc.name);
-                const count = locPatients.length;
-
-                let tagsHtml = locPatients.map(p => `
-                    <span class="inline-flex items-center gap-1 bg-indigo-100 text-indigo-800 text-[10px] px-2 py-1 rounded border border-indigo-200">
-                        ${p.name}
-                        <button onclick="removeLocationFromPatient(${p.id})" class="hover:text-red-600 ml-1 font-bold text-indigo-400 hover:bg-indigo-50 rounded-full w-3 h-3 flex items-center justify-center">&times;</button>
-                    </span>
-                `).join('');
-
-                const card = document.createElement('div');
-                card.className = "bg-indigo-50 border border-indigo-100 rounded p-3 flex flex-col gap-2 relative group";
-                card.innerHTML = `
-                    <div class="flex justify-between items-center mb-1 pr-6">
-                        <input type="text" value="${loc.name}" 
-                            class="bg-transparent font-bold text-indigo-900 text-sm w-full focus:outline-none focus:border-b border-indigo-300"
-                            onchange="updateLocationName(${loc.id}, this.value)">
-                        <span class="bg-indigo-200 text-indigo-800 text-[10px] px-1.5 py-0.5 rounded-full font-mono whitespace-nowrap">${count}</span>
-                    </div>
-                    <div class="flex flex-wrap gap-1 mb-1 max-h-24 overflow-y-auto patient-list-scroll">
-                        ${tagsHtml || '<span class="text-[10px] text-indigo-300 italic">No patients assigned</span>'}
-                    </div>
-                    <textarea rows="2" placeholder="Paste names to add..." 
-                        class="w-full text-xs p-1.5 border border-indigo-200 rounded focus:ring-1 focus:ring-indigo-400 resize-none bg-white mt-auto"
-                        onkeydown="handleLocationInput(event, '${loc.name}')"></textarea>
-                    
-                    <button onclick="removeLocation(${loc.id})" class="absolute top-1 right-1 text-indigo-300 hover:text-red-500 transition z-10 p-1">
-                        <i class="fa-solid fa-times-circle"></i>
-                    </button>
-                `;
-                locGridEl.appendChild(card);
-            });
-        }
-
-        // --- PREFERENCES ---
-        function handleDocPrefInput(event, docName) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                const input = event.target;
-                const rawValue = input.value;
-                const namesToMatch = rawValue.split(/[\n,]+/).map(n => n.trim().toLowerCase()).filter(n => n);
-                
-                if (namesToMatch.length > 0) {
-                    let matchCount = 0;
-                    patients.forEach(p => {
-                        if (namesToMatch.includes(p.name.toLowerCase())) {
-                            p.pref = docName;
-                            matchCount++;
-                        }
-                    });
-                    if(matchCount === 0) alert("No matching patients found.");
-                    else { renderAll(); input.value = ''; }
-                }
-            }
-        }
-
-        function removePrefFromDoc(patientId) {
-            const p = patients.find(pat => pat.id === patientId);
-            if(p) { p.pref = ""; renderAll(); }
-        }
-
-        // --- RENDERING ---
-        function renderAll() {
-            renderDoctors();
-            renderPatientLists();
-            renderLocations();
-        }
-
-        function renderDoctors() {
-            docListEl.innerHTML = '';
-            doctors.forEach((d, index) => {
-                const prefs = patients.filter(p => p.pref === d.name);
-                const card = document.createElement('div');
-                card.className = "bg-white border rounded shadow-sm text-sm overflow-hidden transition-all";
-                const header = document.createElement('div');
-                header.className = "p-3 flex justify-between items-center bg-slate-50 cursor-pointer hover:bg-slate-100";
-                
-                let rangeText = "";
-                if(d.ranges.length > 0) {
-                    rangeText = `<span class="text-xs text-green-600 bg-green-50 border border-green-200 rounded px-1 ml-1">${d.ranges.length} Ranges</span>`;
-                }
-
-                header.onclick = (e) => {
-                    if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON' && !e.target.closest('button')) 
-                        toggleDocAccordion(index);
-                };
-
-                header.innerHTML = `
-                    <div class="flex items-center gap-2 font-medium text-slate-700">
-                        <i class="fa-solid fa-user-doctor text-slate-400"></i>
-                        ${d.name}
-                        ${prefs.length > 0 ? `<span class="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full">${prefs.length}</span>` : ''}
-                        ${rangeText}
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <button onclick="toggleDocAccordion(${index}); event.stopPropagation();" class="text-slate-400 hover:text-blue-500" title="Set Availability"><i class="fa-regular fa-clock"></i></button>
-                        <i id="arrow-${index}" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform"></i>
-                    </div>
-                `;
-
-                const body = document.createElement('div');
-                body.id = `doc-body-${index}`;
-                body.className = "max-h-0 border-t border-slate-100 bg-white"; 
-                
-                let prefsHtml = prefs.map(p => `
-                    <span class="inline-flex items-center gap-1 bg-amber-50 text-amber-800 text-xs px-2 py-1 rounded border border-amber-100 mb-1">
-                        ${p.name} <span class="text-[10px] text-amber-400">(Q${p.freq})</span>
-                        <button onclick="removePrefFromDoc(${p.id})" class="hover:text-red-600 ml-1"><i class="fa-solid fa-times"></i></button>
-                    </span>
-                `).join('');
-
-                let rangesHtml = d.ranges.map((r, i) => `
-                    <div class="flex justify-between text-xs bg-slate-50 p-1 rounded border mb-1">
-                        <span>${r.start} - ${r.end}</span>
-                        <button onclick="removeRange(${d.id}, ${i})" class="text-red-400 hover:text-red-600 px-1">&times;</button>
-                    </div>
-                `).join('');
-
-                body.innerHTML = `
-                    <div class="p-3 space-y-4">
-                        <div class="bg-blue-50 p-2 rounded border border-blue-100">
-                            <div class="text-[10px] uppercase font-bold text-blue-500 mb-1">Availability (Default: Full Shift)</div>
-                            <div class="mb-2">${rangesHtml}</div>
-                            <div class="flex gap-1">
-                                <input type="time" id="start-${d.id}" class="w-1/2 p-1 text-xs border rounded">
-                                <input type="time" id="end-${d.id}" class="w-1/2 p-1 text-xs border rounded">
-                                <button onclick="addRange(${d.id})" class="bg-blue-500 text-white px-2 rounded text-xs"><i class="fa-solid fa-plus"></i></button>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="text-[10px] uppercase font-bold text-slate-400 mb-1">Preferred Patients</div>
-                            <div class="flex flex-wrap gap-1">
-                                ${prefsHtml || '<span class="text-xs text-slate-400 italic">None</span>'}
-                            </div>
-                            <textarea placeholder="Bulk add pref names..." rows="2" class="w-full text-xs p-2 border rounded focus:ring-1 focus:ring-green-400 mt-1 resize-none" onkeydown="handleDocPrefInput(event, '${d.name}')"></textarea>
-                        </div>
-                        <div class="text-right pt-1"><button onclick="removeDoctor('${d.name}')" class="text-xs text-red-400 hover:text-red-600 underline">Remove Doctor</button></div>
-                    </div>
-                `;
-                card.appendChild(header);
-                card.appendChild(body);
-                docListEl.appendChild(card);
-            });
-        }
-
-        function toggleDocAccordion(index) {
-            const body = document.getElementById(`doc-body-${index}`);
-            const arrow = document.getElementById(`arrow-${index}`);
-            if (body.classList.contains('max-h-0')) {
-                body.classList.remove('max-h-0');
-                body.classList.add('max-h-96');
-                arrow.style.transform = 'rotate(180deg)';
-            } else {
-                body.classList.add('max-h-0');
-                body.classList.remove('max-h-96');
-                arrow.style.transform = 'rotate(0deg)';
-            }
-        }
-
-        // --- PATIENT HANDLING ---
-        function handlePatientInput(event, freq) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                const input = event.target;
-                const rawValue = input.value;
-                const names = rawValue.split(/[\n,]+/).map(n => n.trim()).filter(n => n);
-                if (names.length > 0) {
-                    names.forEach(name => {
-                         patients.push({ 
-                             id: Date.now() + Math.random(), 
-                             name: name, 
-                             freq: parseInt(freq), 
-                             pref: "", 
-                             location: "",
-                             entryOrder: patientEntryCounter++
-                        });
-                    });
-                    renderAll();
-                    input.value = '';
-                }
-            }
-        }
-
-        function removePatient(id) {
-            patients = patients.filter(p => p.id !== id);
-            renderAll();
-        }
-
-        function updatePatientPref(id, newPref) {
-            const p = patients.find(pat => pat.id === id);
-            if (p) { p.pref = newPref; renderAll(); }
-        }
-
-        function renderPatientLists() {
-            document.getElementById('patientCountBadge').innerText = `${patients.length} Patients`;
-            [1, 2, 4, 8].forEach(q => {
-                const listEl = document.getElementById(`list-q${q}`);
-                const countEl = document.getElementById(`count-q${q}`);
-                const qPatients = patients.filter(p => p.freq === q);
-                countEl.innerText = qPatients.length;
-                listEl.innerHTML = '';
-                qPatients.forEach(p => {
-                    let optionsHTML = `<option value="">No Pref</option>`;
-                    doctors.forEach(d => {
-                        const selected = p.pref === d.name ? 'selected' : '';
-                        optionsHTML += `<option value="${d.name}" ${selected}>${d.name}</option>`;
-                    });
-                    
-                    const borderClass = p.pref ? 'border-amber-300 bg-amber-50' : 'border-slate-200 bg-white';
-                    const locBadge = p.location 
-                        ? `<span class="text-[10px] bg-indigo-100 text-indigo-700 px-1 rounded ml-1 truncate max-w-[80px]">${p.location}</span>` 
-                        : '';
-
-                    const item = document.createElement('div');
-                    item.className = `${borderClass} p-2 rounded shadow-sm border flex flex-col gap-2 animate-fade-in`;
-                    item.innerHTML = `
-                        <div class="flex justify-between items-start">
-                            <div class="flex flex-col truncate w-full">
-                                <span class="font-medium text-slate-800 text-sm truncate" title="${p.name}">${p.name}</span>
-                                ${locBadge ? `<div class="mt-0.5">${locBadge}</div>` : ''}
-                            </div>
-                            <button onclick="removePatient(${p.id})" class="text-slate-300 hover:text-red-500 ml-2"><i class="fa-solid fa-times"></i></button>
-                        </div>
-                        <select onchange="updatePatientPref(${p.id}, this.value)" class="w-full text-xs p-1 border rounded bg-white text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-300">
-                            ${optionsHTML}
-                        </select>
-                    `;
-                    listEl.appendChild(item);
-                });
-            });
-        }
-
-        // --- CORE ALGORITHM & CALCS ---
-        function isDoctorAvailableAtHour(doc, hourIndex) {
-            // Robust logic: use minute offsets from shift start
-            if (!doc.ranges || doc.ranges.length === 0) return true;
-
-            const shiftStartStr = document.getElementById('startTime').value;
-            const shiftStartMins = timeToMinutes(shiftStartStr);
-            
-            // Check middle of the hour
-            const checkMinute = (hourIndex * 60) + 30; 
-
-            for(let r of doc.ranges) {
-                let startOffset = normalizeToShift(r.start, shiftStartMins);
-                let endOffset = normalizeToShift(r.end, shiftStartMins);
-                
-                // Handle case where range ends next day but user typed "02:00" and logic normalized it
-                if (endOffset < startOffset) endOffset += 24*60; 
-
-                if (checkMinute >= startOffset && checkMinute < endOffset) return true;
-            }
-            return false;
-        }
-
-        function getDoctorAvailableHours(doc) {
-            if (!doc.ranges || doc.ranges.length === 0) return shiftHours;
-            
-            const shiftStartStr = document.getElementById('startTime').value;
-            const shiftStartMins = timeToMinutes(shiftStartStr);
-            let totalMins = 0;
-
-            doc.ranges.forEach(r => {
-                let startOffset = normalizeToShift(r.start, shiftStartMins);
-                let endOffset = normalizeToShift(r.end, shiftStartMins);
-                if (endOffset <= startOffset) endOffset += 24*60;
-                totalMins += (endOffset - startOffset);
-            });
-            return totalMins / 60;
-        }
-
-        function getCheckCountForDoc(patient, doc) {
-            // Calculates checks ONLY if doc is present
-            let count = 0;
-            const totalHoursInt = Math.ceil(shiftHours);
-            for (let h = 0; h < totalHoursInt; h++) {
-                let isDue = false;
-                if (patient.freq === 8) {
-                    if (h >= q8Offset && (h - q8Offset) % 8 === 0) isDue = true;
-                } else {
-                    if (h % patient.freq === 0) isDue = true;
-                }
-
-                if (isDue && isDoctorAvailableAtHour(doc, h)) {
-                    count++;
-                }
-            }
-            return count;
-        }
-
-        function getBurden(patient) {
-            // Total checks needed by patient
-            let count = 0;
-            const totalHoursInt = Math.ceil(shiftHours);
-            for (let h = 0; h < totalHoursInt; h++) {
-                if (patient.freq === 8) {
-                    if (h >= q8Offset && (h - q8Offset) % 8 === 0) count++;
-                } else {
-                    if (h % patient.freq === 0) count++;
-                }
-            }
-            return count;
-        }
-
-        // --- NEW SIMULATION-BASED ASSIGNMENT ---
-        function simulateSchedule(assignment) {
-            const docKeys = Object.keys(assignment);
-            const totalHoursInt = Math.ceil(shiftHours);
-            const equitySlider = document.getElementById('equitySlider');
-            const equityFactor = equitySlider ? parseInt(equitySlider.value) / 100 : 1;
-            
-            // Temporary trackers for the simulation
-            let simStats = {};
-            // Decision Load: Tracks (Projected Total Load) to guide load balancing
-            // Starts with (Phantom "Handicap" + Allocated Primary).
-            // Increments as we assign coverage to balance strictly.
-            let decisionLoad = {};
-
-            docKeys.forEach(k => {
-                simStats[k] = { active: 0, hourlyLoad: new Array(totalHoursInt).fill(0) };
-                decisionLoad[k] = assignment[k].simulatedLoad || 0;
-            });
-
-            // Flatten all tasks
-            let allTasks = [];
-            Object.values(assignment).forEach(primaryDoc => {
-                primaryDoc.patients.forEach(p => {
-                    for (let h = 0; h < totalHoursInt; h++) {
-                        let isDue = false;
-                        if (p.freq === 8) { if (h >= q8Offset && (h - q8Offset) % 8 === 0) isDue = true; }
-                        else { if (h % p.freq === 0) isDue = true; }
-                        
-                        if(isDue) {
-                            allTasks.push({ patient: p, primaryDoc: primaryDoc, hour: h });
-                        }
-                    }
-                });
-            });
-
-            // Sort tasks to prioritize earlier hours
-            allTasks.sort((a,b) => a.hour - b.hour);
-
-            let hourlyPlan = []; // For timeline
-
-            // Process hour by hour
-            for (let h = 0; h < totalHoursInt; h++) {
-                let hourTasks = allTasks.filter(t => t.hour === h);
-                let hourAssignments = {};
-                
-                // Identify needed coverage
-                let pending = [];
-                
-                hourTasks.forEach(t => {
-                    // Try Primary
-                    if (isDoctorAvailableAtHour(t.primaryDoc, h)) {
-                        simStats[t.primaryDoc.name].active++;
-                        simStats[t.primaryDoc.name].hourlyLoad[h]++;
-                        
-                        if(!hourAssignments[t.primaryDoc.name]) hourAssignments[t.primaryDoc.name] = [];
-                        hourAssignments[t.primaryDoc.name].push({ ...t, isCoverage: false });
-                    } else {
-                        pending.push(t);
-                    }
-                });
-
-                // Assign Coverage
-                pending.forEach(t => {
-                    let availableDocs = docKeys.filter(name => isDoctorAvailableAtHour(assignment[name], h));
-                    
-                    if (availableDocs.length === 0) {
-                        // Unassigned
-                        let key = "UNASSIGNED";
-                        if(!hourAssignments[key]) hourAssignments[key] = [];
-                        hourAssignments[key].push({ ...t, isCoverage: false, unassigned: true });
-                    } else {
-                        // Intelligent Sorting for Coverage
-                        // We want to give this check to the doctor who is "Least Busy" relative to their capacity goal.
-                        // decisionLoad includes the Phantom Handicap (unavoidable future work), ensuring we 
-                        // shift shared/avoidable work to others (like Claire) instead of Carl.
-                        
-                        availableDocs.sort((a,b) => {
-                            // Effective Capacity (Density vs Totals)
-                            const capA = (assignment[a].availHours * equityFactor) + (1 * (1 - equityFactor));
-                            const capB = (assignment[b].availHours * equityFactor) + (1 * (1 - equityFactor));
-                            const safeCapA = Math.max(capA, 0.1);
-                            const safeCapB = Math.max(capB, 0.1);
-
-                            // Metric: Projected Load / Capacity
-                            // Use decisionLoad which includes Phantom Load
-                            const metricA = decisionLoad[a] / safeCapA;
-                            const metricB = decisionLoad[b] / safeCapB;
-                            
-                            // If metrics are very close, break tie with current active load (smoothness)
-                            if (Math.abs(metricA - metricB) < 0.05) {
-                                return simStats[a].active - simStats[b].active;
-                            }
-                            return metricA - metricB;
-                        });
-
-                        let coverDocName = availableDocs[0];
-                        
-                        // Update stats
-                        simStats[coverDocName].active++;
-                        simStats[coverDocName].hourlyLoad[h]++;
-                        
-                        // Increment decision load to reflect this new commitment
-                        decisionLoad[coverDocName]++;
-                        
-                        if(!hourAssignments[coverDocName]) hourAssignments[coverDocName] = [];
-                        hourAssignments[coverDocName].push({ ...t, isCoverage: true });
-                    }
-                });
-                
-                hourlyPlan.push(hourAssignments);
-            }
-
-            return { stats: simStats, schedule: hourlyPlan };
-        }
-
-        function calculateDistribution() {
-            if (doctors.length === 0) { alert("Please add doctors."); return; }
-            if (patients.length === 0) { alert("Please add patients."); return; }
-            
-            // Get Equity Setting (0 = Equal Totals, 1 = Equal Density)
-            const equitySlider = document.getElementById('equitySlider');
-            const equityFactor = equitySlider ? parseInt(equitySlider.value) / 100 : 1;
-
-            // Get Clustering Setting (0-100%)
-            const clusterSlider = document.getElementById('clusterSlider');
-            const clusterVal = clusterSlider ? parseInt(clusterSlider.value) : 15;
-            
-            // Map 0-100 to a discount multiplier directly.
-            // 15% -> 0.15 discount -> 0.85 multiplier
-            const clusterDiscount = clusterVal / 100;
-            const clusterMultiplier = 1.0 - clusterDiscount;
-
-            // Init & Calc Total Burden
-            let totalBurden = 0;
-            patients.forEach(p => totalBurden += getBurden(p));
-
-            // 1. Calculate Concurrency (Uniqueness)
-            const totalHoursInt = Math.ceil(shiftHours);
-            let hourlyCounts = new Array(totalHoursInt).fill(0);
-            
-            doctors.forEach(d => {
-                d.availHours = getDoctorAvailableHours(d); 
-                for(let h=0; h<totalHoursInt; h++) {
-                    if(isDoctorAvailableAtHour(d, h)) hourlyCounts[h]++;
-                }
-            });
-
-            // 2. Calculate Coverage Score & Phantom Load
-            let totalCoverageScore = 0;
-            doctors.forEach(d => {
-                d.coverageScore = 0;
-                for(let h=0; h<totalHoursInt; h++) {
-                    if(isDoctorAvailableAtHour(d, h)) {
-                        let count = hourlyCounts[h];
-                        // Squared Weighting: Emphasizes scarcity (e.g. solo hours) significantly more.
-                        if(count > 0) d.coverageScore += Math.pow(1.0 / count, 2);
-                    }
-                }
-                totalCoverageScore += d.coverageScore;
-            });
-
-            let assignment = {};
-            doctors.forEach(d => { 
-                // "Phantom Load" Logic for Generalization:
-                // The coefficients (0.85, 0.15) are tuned to strictly enforce "Equal Totals" (0% setting)
-                // by acknowledging the structural inevitability of work distribution in unequal shifts.
-                // 1. Incoming (0.85): Long-shift/Solo doctors act as "Coverage Buckets". We fill their 
-                //    projected capacity early to prevent them from taking optional Primary work.
-                // 2. Debt (0.15): Short-shift doctors create work for others. We minimize their penalty 
-                //    to force them to maximize their active time, knowing the system handles the overflow.
-                
-                let coverageRatio = totalCoverageScore > 0 ? d.coverageScore / totalCoverageScore : 0;
-                // High handicap for solo/scarce hours
-                const incomingLoad = totalBurden * 0.85 * coverageRatio;
-
-                // Low penalty for short shifts to encourage primary assignment
-                const debtRatio = shiftHours > 0 ? (1.0 - (d.availHours / shiftHours)) : 0;
-                const debtLoad = totalBurden * 0.15 * debtRatio;
-
-                // Combine for Phantom Load
-                // Only applies at Equal Totals (equityFactor < 1)
-                const phantomLoad = (incomingLoad + debtLoad) * (1 - equityFactor);
-
-                assignment[d.name] = { 
-                    ...d, 
-                    patients: [], 
-                    activeLoad: 0, 
-                    burdenLoad: 0,
-                    simulatedLoad: phantomLoad 
-                }; 
-            });
-
-            // 3. Assign Primary (Greedy Best Fit)
-            let unassigned = [...patients];
-
-            // Sort unassigned by burden (heaviest first)
-            unassigned.sort(() => Math.random() - 0.5);
-            unassigned.sort((a, b) => getBurden(b) - getBurden(a));
-
-            unassigned.forEach(p => {
-                let docObjects = Object.values(assignment);
-                
-                docObjects.sort((a, b) => {
-                    const costA = getCheckCountForDoc(p, a);
-                    const costB = getCheckCountForDoc(p, b);
-
-                    // Effective Capacity 
-                    const capA = (a.availHours * equityFactor) + (1 * (1 - equityFactor));
-                    const capB = (b.availHours * equityFactor) + (1 * (1 - equityFactor));
-                    const safeCapA = Math.max(capA, 0.1);
-                    const safeCapB = Math.max(capB, 0.1);
-
-                    // Score: (Handicap + Allocated + NewCost) / Capacity
-                    let scoreA = (a.simulatedLoad + costA) / safeCapA;
-                    let scoreB = (b.simulatedLoad + costB) / safeCapB;
-
-                    // Dynamic Preference Bonus
-                    // At 0% (Equal Totals): 0.98 (Tiny influence) - override pref to balance load
-                    // At 100% (Equal Density): 0.6 (Stronger influence)
-                    const prefBonus = 0.6 + (0.39 * (1 - equityFactor)); // Adjusted to 0.99 max for strict equality
-                    
-                    if (p.pref === a.name) scoreA *= prefBonus;
-                    if (p.pref === b.name) scoreB *= prefBonus;
-
-                    // Clustering Bonus (Location Stickiness)
-                    // If doctor already has a patient in this location, reduce score to encourage grouping.
-                    const hasLocA = a.patients.some(existing => existing.location === p.location);
-                    const hasLocB = b.patients.some(existing => existing.location === p.location);
-                    
-                    // Apply dynamic discount derived from slider
-                    if (hasLocA) scoreA *= clusterMultiplier; 
-                    if (hasLocB) scoreB *= clusterMultiplier;
-
-                    return scoreA - scoreB;
-                });
-                
-                let target = docObjects[0];
-                target.patients.push(p);
-                target.burdenLoad += getBurden(p);
-                // Update simulatedLoad to include this primary commitment
-                target.simulatedLoad += getCheckCountForDoc(p, target);
-            });
-
-            // 4. Simulate with intelligent coverage balancing
-            const simulation = simulateSchedule(assignment);
-            
-            // Update Assignment with Real Stats
-            Object.keys(assignment).forEach(k => {
-                assignment[k].activeLoad = simulation.stats[k].active;
-            });
-            
-            currentAssignment = assignment;
-            currentSchedule = simulation.schedule; 
-
-            renderResults(assignment);
-            renderSummaryTable(assignment);
-            renderTimeline(assignment); 
-            
-            document.getElementById('resultsSection').classList.remove('hidden');
-            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // --- VIEW RENDERING ---
-        function renderResults(assignment) {
-            const container = document.getElementById('assignmentGrid');
-            container.innerHTML = '';
-
-            const docs = Object.values(assignment);
-            const activeLoads = docs.map(d => d.activeLoad);
-            const totalActive = activeLoads.reduce((a,b)=>a+b, 0);
-            const totalHours = docs.reduce((a,b)=>a+b.availHours, 0);
-            const avgPerHr = totalHours > 0 ? (totalActive / totalHours).toFixed(2) : 0;
-
-            document.getElementById('avgLoadDisplay').innerText = avgPerHr;
-            document.getElementById('maxLoadDisplay').innerText = Math.max(...activeLoads);
-            document.getElementById('minLoadDisplay').innerText = Math.min(...activeLoads);
-
-            docs.forEach(d => {
-                // Sorting for Output View:
-                // 1. Location Index (Aquarium > Left Periph > Left Central > Right Central > Right Periph)
-                // 2. Entry Order (Time of entry)
-                d.patients.sort((a,b) => {
-                    const locIdxA = locations.findIndex(l => l.name === a.location);
-                    const locIdxB = locations.findIndex(l => l.name === b.location);
-                    
-                    // Handle missing/unknown locations (put them at end)
-                    const safeIdxA = locIdxA === -1 ? 999 : locIdxA;
-                    const safeIdxB = locIdxB === -1 ? 999 : locIdxB;
-
-                    if (safeIdxA !== safeIdxB) return safeIdxA - safeIdxB;
-                    
-                    // If same location, sort by entry order
-                    return (a.entryOrder || 0) - (b.entryOrder || 0);
-                });
-
-                let pListHTML = d.patients.map(p => `
-                    <div class="flex justify-between items-center text-sm p-2 bg-slate-50 rounded mb-1 border-l-4 ${getQColor(p.freq)}">
-                        <div class="flex flex-col">
-                            <span>${p.name}</span>
-                            ${p.location ? `<span class="text-[10px] text-indigo-500 italic">${p.location}</span>` : ''}
-                        </div>
-                        <div class="flex items-center gap-1">
-                            ${p.pref ? '<i class="fa-solid fa-star text-xs text-amber-500"></i>' : ''}
-                            <span class="font-mono font-bold text-slate-500 text-xs">Q${p.freq}</span>
-                        </div>
-                    </div>
-                `).join('');
-
-                const card = document.createElement('div');
-                card.className = `card p-5 border-t-8 border-blue-500 fade-in`;
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 class="text-xl font-bold text-slate-800">${d.name}</h3>
-                            <div class="text-xs text-slate-400">Available: ${d.availHours.toFixed(1)}h</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-xl font-bold text-slate-700">Act: ${d.activeLoad}</div>
-                            <div class="text-[10px] text-slate-400 uppercase">Burden: ${d.burdenLoad}</div>
-                        </div>
-                    </div>
-                    <div class="space-y-1">
-                        ${pListHTML}
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function renderSummaryTable(assignment) {
-            const table = document.querySelector('#viewTableContainer table');
-            const thead = table.querySelector('thead');
-            const tbody = document.getElementById('summaryTableBody');
-            
-            // Rebuild Header Dynamically
-            let headerHTML = `
-                <tr>
-                    <th class="px-6 py-3 font-bold text-slate-800 whitespace-nowrap bg-slate-50 sticky left-0 z-10 border-r">Doctor</th>
-            `;
-            
-            // Add Location Headers
-            locations.forEach(l => {
-                headerHTML += `<th class="px-4 py-3 text-xs font-bold text-indigo-700 bg-indigo-50/50 text-center whitespace-nowrap border-r border-indigo-100">${l.name}</th>`;
-            });
-            
-            headerHTML += `
-                    <th class="px-4 py-3 text-red-600 bg-red-50 text-center border-r border-red-100">Q1</th>
-                    <th class="px-4 py-3 text-orange-600 bg-orange-50 text-center border-r border-orange-100">Q2</th>
-                    <th class="px-4 py-3 text-blue-600 bg-blue-50 text-center border-r border-blue-100">Q4</th>
-                    <th class="px-4 py-3 text-green-600 bg-green-50 text-center border-r border-green-100">Q8</th>
-                    <th class="px-6 py-3 font-bold text-slate-800 bg-slate-100 text-right whitespace-nowrap">Active / Burden</th>
-                    <th class="px-6 py-3 font-bold text-slate-800 bg-slate-100 text-right whitespace-nowrap">Avail Hrs</th>
-                </tr>
-            `;
-            thead.innerHTML = headerHTML;
-
-            // Rebuild Body
-            tbody.innerHTML = '';
-            Object.values(assignment).forEach(doc => {
-                const q1 = doc.patients.filter(p => p.freq === 1).length;
-                const q2 = doc.patients.filter(p => p.freq === 2).length;
-                const q4 = doc.patients.filter(p => p.freq === 4).length;
-                const q8 = doc.patients.filter(p => p.freq === 8).length;
-                
-                // Location Counts
-                let locCells = '';
-                locations.forEach(l => {
-                    const count = doc.patients.filter(p => p.location === l.name).length;
-                    const style = count > 0 ? "font-bold text-indigo-700 bg-indigo-50/30" : "text-slate-300 bg-white";
-                    locCells += `<td class="px-4 py-4 text-center border-r border-slate-100 text-xs ${style}">${count > 0 ? count : '-'}</td>`;
-                });
-
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 border-b last:border-0";
-                tr.innerHTML = `
-                    <td class="px-6 py-4 font-medium text-slate-900 whitespace-nowrap bg-white sticky left-0 border-r font-bold">${doc.name}</td>
-                    ${locCells}
-                    <td class="px-4 py-4 bg-red-50/10 font-mono text-red-700 font-bold text-center border-r border-slate-100">${q1}</td>
-                    <td class="px-4 py-4 bg-orange-50/10 font-mono text-orange-700 font-bold text-center border-r border-slate-100">${q2}</td>
-                    <td class="px-4 py-4 bg-blue-50/10 font-mono text-blue-700 font-bold text-center border-r border-slate-100">${q4}</td>
-                    <td class="px-4 py-4 bg-green-50/10 font-mono text-green-700 font-bold text-center border-r border-slate-100">${q8}</td>
-                    <td class="px-6 py-4 text-right font-bold text-lg bg-slate-50 whitespace-nowrap">${doc.activeLoad} <span class="text-xs font-normal text-slate-400">/ ${doc.burdenLoad}</span></td>
-                    <td class="px-6 py-4 text-right text-slate-500 whitespace-nowrap">${doc.availHours.toFixed(1)}h</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function renderTimeline(assignment) {
-            const container = document.getElementById('timelineContent');
-            container.innerHTML = '';
-            
-            const sTimeStr = document.getElementById('startTime').value;
-            const startHour = parseInt(sTimeStr.split(':')[0]);
-            const startMin = sTimeStr.split(':')[1];
-            
-            // Use PRE-CALCULATED Schedule
-            if (!currentSchedule) return;
-
-            currentSchedule.forEach((hourAssignments, i) => {
-                let currentH = (startHour + i) % 24;
-                let ampm = currentH >= 12 ? 'PM' : 'AM';
-                let displayH = currentH % 12;
-                if(displayH === 0) displayH = 12;
-                
-                const hourBlock = document.createElement('div');
-                hourBlock.className = "pl-8 pb-8 relative";
-                hourBlock.innerHTML = `
-                    <div class="absolute left-[6px] top-1 w-5 h-5 bg-slate-400 rounded-full border-4 border-white z-10 shadow-sm"></div>
-                    <h3 class="font-bold text-lg text-slate-700 mb-3">${displayH}:${startMin} ${ampm}</h3>
-                `;
-
-                // Check for emptiness
-                if (Object.keys(hourAssignments).length === 0) {
-                    hourBlock.innerHTML += `<div class="text-slate-400 italic text-sm">No standard checks due.</div>`;
-                } else {
-                    const grid = document.createElement('div');
-                    grid.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3";
-                    
-                    Object.keys(hourAssignments).sort().forEach(docName => {
-                        const assignedTasks = hourAssignments[docName];
-                        let isUnassigned = (docName === "UNASSIGNED");
-                        let cardClass = isUnassigned ? "bg-red-100 border-red-300" : "bg-slate-50 border-slate-200";
-                        let headerColor = isUnassigned ? "text-red-700" : "text-slate-800";
-
-                        // Group by Loc
-                        let locGroups = {};
-                        assignedTasks.forEach(t => {
-                            let loc = t.patient.location || "Unspecified";
-                            if(!locGroups[loc]) locGroups[loc] = [];
-                            locGroups[loc].push(t);
-                        });
-                        
-                        // Sort locations based on config order
-                        let sortedLocs = Object.keys(locGroups).sort((a,b) => {
-                             const idxA = locations.findIndex(l => l.name === a);
-                             const idxB = locations.findIndex(l => l.name === b);
-                             const safeIdxA = idxA === -1 ? 999 : idxA;
-                             const safeIdxB = idxB === -1 ? 999 : idxB;
-                             return safeIdxA - safeIdxB;
-                        });
-
-                        let innerHTML = '';
-                        sortedLocs.forEach(locName => {
-                            let locTasks = locGroups[locName];
-                            
-                            // Sort tasks within location by Entry Order (or freq if entry order missing)
-                            locTasks.sort((a,b) => {
-                                const orderA = a.patient.entryOrder !== undefined ? a.patient.entryOrder : 99999;
-                                const orderB = b.patient.entryOrder !== undefined ? b.patient.entryOrder : 99999;
-                                return orderA - orderB;
-                            });
-                            
-                            innerHTML += `
-                                <div class="mb-2 last:mb-0">
-                                    <div class="text-[10px] font-bold text-indigo-600 uppercase border-b border-indigo-100 mb-1">${locName}</div>
-                                    ${locTasks.map(t => `
-                                        <div class="flex justify-between items-center text-xs py-1 border-b border-slate-50 last:border-0">
-                                            <div class="flex flex-col">
-                                                <span class="text-slate-700 font-medium">${t.patient.name}</span>
-                                                ${t.isCoverage ? `<span class="text-[9px] text-orange-600 font-bold">Covering (${t.primaryDoc.name})</span>` : ''}
-                                                ${t.unassigned ? `<span class="text-[9px] text-red-600 font-bold">Primary: ${t.primaryDoc.name}</span>` : ''}
-                                            </div>
-                                            <span class="font-mono font-bold ${getQTextColor(t.patient.freq)}">Q${t.patient.freq}</span>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            `;
-                        });
-
-                        const docCard = document.createElement('div');
-                        docCard.className = `${cardClass} border rounded p-3 shadow-sm`;
-                        docCard.innerHTML = `
-                            <div class="font-bold ${headerColor} text-sm mb-2 pb-1 border-b border-slate-200 flex justify-between">
-                                <div>${docName} <span class="bg-white text-slate-600 text-xs px-2 rounded-full border">${assignedTasks.length}</span></div>
-                            </div>
-                            <div class="space-y-0.5">${innerHTML}</div>
-                        `;
-                        grid.appendChild(docCard);
-                    });
-                    hourBlock.appendChild(grid);
-                }
-                container.appendChild(hourBlock);
-            });
-        }
-
-        // --- COPY OUTPUT ---
         function copyCurrentOutput() {
             if (!currentAssignment || !currentSchedule) { showToast("Generate first."); return; }
             let textToCopy = "";
@@ -1362,37 +1364,21 @@
                 textToCopy = "SHIFT ASSIGNMENTS\n=================\n\n";
                 Object.values(currentAssignment).forEach(d => {
                     textToCopy += `${d.name} [Active: ${d.activeLoad}] [Burden: ${d.burdenLoad}] [Avail: ${d.availHours.toFixed(1)}h]\n`;
-                    
-                    // Sort for export using same logic as Card view
-                    let sortedPatients = [...d.patients].sort((a,b) => {
-                        const locIdxA = locations.findIndex(l => l.name === a.location);
-                        const locIdxB = locations.findIndex(l => l.name === b.location);
-                        const safeIdxA = locIdxA === -1 ? 999 : locIdxA;
-                        const safeIdxB = locIdxB === -1 ? 999 : locIdxB;
-                        if (safeIdxA !== safeIdxB) return safeIdxA - safeIdxB;
-                        return (a.entryOrder || 0) - (b.entryOrder || 0);
-                    });
-
+                    let sortedPatients = [...d.patients].sort(patientComparator);
                     sortedPatients.forEach(p => {
                         textToCopy += ` - ${p.name} (Q${p.freq}) ${p.location ? '['+p.location+']' : ''}\n`;
                     });
                     textToCopy += "\n";
                 });
             } else if (currentView === 'table') {
-                // Header
                 let headers = ["Doctor", ...locations.map(l => l.name), "Q1", "Q2", "Q4", "Q8", "Active", "Burden", "Avail"];
                 textToCopy = "SUMMARY TABLE\n" + headers.join("\t") + "\n";
-                
                 Object.values(currentAssignment).forEach(d => {
                     const q1 = d.patients.filter(p => p.freq === 1).length;
                     const q2 = d.patients.filter(p => p.freq === 2).length;
                     const q4 = d.patients.filter(p => p.freq === 4).length;
                     const q8 = d.patients.filter(p => p.freq === 8).length;
-                    
-                    let locCounts = locations.map(l => {
-                        return d.patients.filter(p => p.location === l.name).length;
-                    }).join("\t");
-
+                    let locCounts = locations.map(l => d.patients.filter(p => p.location === l.name).length).join("\t");
                     textToCopy += `${d.name}\t${locCounts}\t${q1}\t${q2}\t${q4}\t${q8}\t${d.activeLoad}\t${d.burdenLoad}\t${d.availHours.toFixed(1)}\n`;
                 });
             } else if (currentView === 'timeline') {
@@ -1413,14 +1399,11 @@
                         textToCopy += ` ${docName}:\n`;
                         
                         let sorted = tasks.sort((a,b) => {
-                             // Sort by location index then entry order
                              const idxA = locations.findIndex(l => l.name === a.patient.location);
                              const idxB = locations.findIndex(l => l.name === b.patient.location);
                              const safeIdxA = idxA === -1 ? 999 : idxA;
                              const safeIdxB = idxB === -1 ? 999 : idxB;
-                             
                              if (safeIdxA !== safeIdxB) return safeIdxA - safeIdxB;
-                             
                              const orderA = a.patient.entryOrder !== undefined ? a.patient.entryOrder : 99999;
                              const orderB = b.patient.entryOrder !== undefined ? b.patient.entryOrder : 99999;
                              return orderA - orderB;
@@ -1440,42 +1423,6 @@
             document.body.appendChild(textarea);
             textarea.select();
             try { document.execCommand('copy'); showToast("Copied to clipboard!"); } 
-            catch (err) { console.error('Failed to copy', err); showToast("Failed to copy"); }
-            document.body.removeChild(textarea);
-        }
-
-        // --- COPY INPUTS ---
-        function copyInputs() {
-            const start = document.getElementById('startTime').value;
-            const end = document.getElementById('endTime').value;
-            let text = `INPUT CONFIGURATION\n===================\n`;
-            text += `Shift: ${start} to ${end}\nQ8 Offset: +${q8Offset} Hours\n\nDOCTORS\n`;
-            doctors.forEach(d => {
-                let rangeStr = "";
-                if(d.ranges.length > 0) rangeStr = " [" + d.ranges.map(r => `${r.start}-${r.end}`).join(', ') + "]";
-                text += `- ${d.name}${rangeStr}\n`;
-            });
-            text += `\nLOCATIONS\n`;
-            locations.forEach(l => text += `- ${l.name}\n`);
-            text += `\nPATIENT LIST\n`;
-            [1, 2, 4, 8].forEach(q => {
-                const qPats = patients.filter(p => p.freq === q);
-                if (qPats.length > 0) {
-                    text += `\n[Q${q}]\n`;
-                    qPats.forEach(p => {
-                        let details = [];
-                        if (p.location) details.push(p.location);
-                        if (p.pref) details.push(`Pref: ${p.pref}`);
-                        const detailStr = details.length > 0 ? ` (${details.join(', ')})` : '';
-                        text += `- ${p.name}${detailStr}\n`;
-                    });
-                }
-            });
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            document.body.appendChild(textarea);
-            textarea.select();
-            try { document.execCommand('copy'); showToast("Inputs copied to clipboard!"); } 
             catch (err) { console.error('Failed to copy', err); showToast("Failed to copy"); }
             document.body.removeChild(textarea);
         }
