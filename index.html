@@ -1763,7 +1763,7 @@
                 docs.forEach(d => {
                     if (d.patients.length === 0) return;
 
-                    text += `DR. ${d.name.toUpperCase()}\n`;
+                    text += `${d.name.toUpperCase()}\n`;
                     
                     const sortedP = [...d.patients].sort(patientComparator);
                     
