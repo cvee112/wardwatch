@@ -1756,17 +1756,13 @@
 
             let text = "";
 
-            // --- 1. CARD VIEW (Doctor List) ---
+            // --- 1. CARD VIEW ---
             if (currentView === 'card') {
                 const docs = Object.values(currentAssignment);
-                
                 docs.forEach(d => {
                     if (d.patients.length === 0) return;
-
                     text += `DR. ${d.name.toUpperCase()}\n`;
-                    
                     const sortedP = [...d.patients].sort(patientComparator);
-                    
                     sortedP.forEach(p => {
                         const locStr = p.location ? ` (${p.location})` : "";
                         text += `[Q${p.freq}] ${p.name}${locStr}\n`;
@@ -1775,12 +1771,10 @@
                 });
             } 
 
-            // --- 2. TABLE VIEW (Excel/Sheets Ready) ---
+            // --- 2. TABLE VIEW ---
             else if (currentView === 'table') {
                 const startStr = document.getElementById('startTime').value;
                 const totalHoursInt = Math.ceil(shiftHours);
-                
-                // Headers: Location First
                 let headers = ["Location", "Patient", "Freq"];
                 for(let i=0; i<totalHoursInt; i++) {
                     let d = new Date(`01/01/2000 ${startStr}`);
@@ -1790,15 +1784,8 @@
                 text += headers.join("\t") + "\n";
 
                 let sortedPatients = [...patients].sort(patientComparator);
-                
                 sortedPatients.forEach(p => {
-                    // Location first, Uppercase, Empty string if null
-                    let row = [
-                        (p.location || "").toUpperCase(), 
-                        p.name.toUpperCase(), 
-                        `Q${p.freq}`
-                    ];
-                    
+                    let row = [(p.location || "").toUpperCase(), p.name.toUpperCase(), `Q${p.freq}`];
                     for(let h=0; h<totalHoursInt; h++) {
                         let assignedDoc = ""; 
                         if (currentSchedule[h]) {
@@ -1815,12 +1802,22 @@
                 });
             }
 
-            // --- 3. TIMELINE VIEW (Detailed & Structured) ---
+            // --- 3. TIMELINE VIEW (Smart Sorting) ---
             else if (currentView === 'timeline') {
                 const startStr = document.getElementById('startTime').value;
                 const startHour = parseInt(startStr.split(':')[0]);
                 const startMin = startStr.split(':')[1];
                 
+                // Standard Ward Order (Case-insensitive reference)
+                const standardOrder = [
+                    'aquarium', 
+                    'left peripheral', 
+                    'left central', 
+                    'right central', 
+                    'right peripheral', 
+                    'isolation room'
+                ];
+
                 text += `TIMELINE SCHEDULE\nShift Start: ${startStr}\n`;
                 text += `========================================\n\n`;
 
@@ -1833,23 +1830,41 @@
                     const hasTasks = Object.keys(hourAssignments).length > 0;
                     if (!hasTasks) return;
 
-                    // Hour Header
                     text += `[ ${displayH}:${startMin} ${ampm} ]\n`;
                     text += `----------------------------------------\n`;
 
-                    // Sort doctors alphabetically
                     Object.keys(hourAssignments).sort().forEach(docName => {
                         const tasks = hourAssignments[docName];
                         if (tasks.length === 0) return;
 
-                        // Doctor Header: > NAME (Count)
                         text += `  > ${docName.toUpperCase()} (${tasks.length})\n`;
 
-                        // Sort tasks: Location > Patient Name
+                        // SORTING LOGIC:
+                        // 1. If matches standard list (e.g. Aquarium), use standard index (0).
+                        // 2. If custom name (e.g. Bed 1), index becomes 999.
+                        // 3. If both are 999, use alphabetical sort.
                         tasks.sort((a,b) => {
-                            const locA = a.patient.location || "ZZZ"; 
-                            const locB = b.patient.location || "ZZZ";
-                            if (locA !== locB) return locA.localeCompare(locB);
+                            const locA = (a.patient.location || "").trim();
+                            const locB = (b.patient.location || "").trim();
+                            
+                            // Check indices (case-insensitive)
+                            let idxA = standardOrder.indexOf(locA.toLowerCase());
+                            let idxB = standardOrder.indexOf(locB.toLowerCase());
+
+                            // Fallback for non-standard names
+                            if (idxA === -1) idxA = 999;
+                            if (idxB === -1) idxB = 999;
+
+                            // Primary: Physical Order
+                            if (idxA !== idxB) return idxA - idxB;
+                            
+                            // Secondary: Alphabetical (Tie-breaker for custom names)
+                            // This ensures "Bed A" comes before "Bed B"
+                            if (locA.toLowerCase() !== locB.toLowerCase()) {
+                                return locA.localeCompare(locB);
+                            }
+
+                            // Tertiary: Patient Name
                             return a.patient.name.localeCompare(b.patient.name);
                         });
 
@@ -1858,24 +1873,18 @@
                             const locStr = p.location ? `[${p.location.toUpperCase()}]` : "";
                             const freqStr = `(Q${p.freq})`;
                             
-                            // Status Flags
                             let flags = [];
                             if (t.isCoverage) flags.push("*COVERING*");
                             if (t.unassigned) flags.push("!UNASSIGNED!");
-                            
-                            // Only show primary doc name if covering, helps context
-                            if (t.isCoverage && t.primaryDoc) {
-                                flags.push(`(Primary: ${t.primaryDoc.name})`);
-                            }
+                            if (t.isCoverage && t.primaryDoc) flags.push(`(Primary: ${t.primaryDoc.name})`);
 
                             const flagStr = flags.length > 0 ? ` ${flags.join(" ")}` : "";
 
-                            // Indented bullet point
                             text += `    • ${p.name.toUpperCase()} ${locStr} ${freqStr}${flagStr}\n`;
                         });
-                        text += `\n`; // Spacer between doctors
+                        text += `\n`; 
                     });
-                    text += `\n`; // Spacer between hours
+                    text += `\n`; 
                 });
             }
 
@@ -1892,7 +1901,7 @@
                 showToast("Failed to copy"); 
             }
             document.body.removeChild(textarea);
-        }
+        } 
 
 	function downloadCSV() {
             if (!currentSchedule) {
