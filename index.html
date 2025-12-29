@@ -1226,11 +1226,12 @@
             return DOC_COLORS[idx % DOC_COLORS.length];
         }
 
-        function renderSummaryTable(assignment) {
+	function renderSummaryTable(assignment) {
             const summaryContainer = document.getElementById('summaryTableWrapper');
             const detailContainer = document.getElementById('detailTableWrapper');
             
             // --- 1. RENDER DOCTOR SUMMARY TABLE ---
+            // (This section remains unchanged, just compacting it for brevity in this snippet)
             let headerHTML = `<table class="w-full text-sm text-left text-slate-600"><thead class="text-xs text-slate-700 uppercase bg-slate-50 border-b">
                 <tr><th class="px-6 py-3 font-bold text-slate-800 whitespace-nowrap bg-slate-50 sticky left-0 z-10 border-r">Doctor</th>`;
             locations.forEach(l => {
@@ -1255,10 +1256,7 @@
                     const style = count > 0 ? "font-bold text-indigo-700 bg-indigo-50/30" : "text-slate-300 bg-white";
                     locCells += `<td class="px-4 py-4 text-center border-r border-slate-100 text-xs ${style}">${count > 0 ? count : '-'}</td>`;
                 });
-
-                // Get doctor color badge
                 const color = getDoctorColorClass(doc.name);
-                
                 headerHTML += `
                     <tr class="hover:bg-slate-50 border-b last:border-0">
                         <td class="px-6 py-4 font-medium text-slate-900 whitespace-nowrap bg-white sticky left-0 border-r font-bold">
@@ -1271,13 +1269,12 @@
                         <td class="px-4 py-4 bg-green-50/10 font-mono text-green-700 font-bold text-center border-r border-slate-100">${q8}</td>
                         <td class="px-6 py-4 text-right font-bold text-lg bg-slate-50 whitespace-nowrap">${doc.activeLoad} <span class="text-xs font-normal text-slate-400">/ ${doc.burdenLoad}</span></td>
                         <td class="px-6 py-4 text-right text-slate-500 whitespace-nowrap">${doc.availHours.toFixed(1)}h</td>
-                    </tr>
-                `;
+                    </tr>`;
             });
             headerHTML += `</tbody></table>`;
             summaryContainer.innerHTML = headerHTML;
 
-            // --- 2. RENDER DETAILED SCHEDULE TABLE ---
+            // --- 2. RENDER DETAILED SCHEDULE TABLE (UPDATED WITH BUTTON) ---
             
             // Build Time Headers
             const startStr = document.getElementById('startTime').value;
@@ -1290,7 +1287,24 @@
                 timeHeaders += `<th class="px-2 py-3 text-xs text-slate-500 text-center border-l border-slate-200 bg-slate-50 min-w-[50px]">${timeText}</th>`;
             }
 
-            // Table Header
+            // *** BUTTON INJECTION START ***
+            // Locate the container in HTML that holds the title "Patient Schedule Matrix"
+            const titleContainer = detailContainer.parentElement.querySelector('h3').parentElement;
+            
+            // Replace the title HTML with Flexbox Title + Button
+            titleContainer.innerHTML = `
+                <div class="flex justify-between items-center mb-2 ml-1">
+                    <h3 class="text-lg font-bold text-slate-700">Patient Schedule Matrix</h3>
+                    <button onclick="downloadCSV()" class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1.5 px-3 rounded shadow transition">
+                        <i class="fa-solid fa-file-csv mr-1"></i> Export CSV
+                    </button>
+                </div>
+                <div class="bg-white rounded-lg shadow overflow-x-auto border border-slate-200" id="detailTableWrapper"></div>
+            `;
+            // Re-select detailContainer because we just wiped the parent innerHTML
+            const newDetailContainer = document.getElementById('detailTableWrapper');
+            // *** BUTTON INJECTION END ***
+
             let detailHTML = `<table class="w-full text-sm text-left border-collapse"><thead class="text-xs text-slate-700 uppercase bg-slate-100 border-b">
                 <tr>
                     <th class="px-4 py-3 sticky left-0 bg-slate-100 z-30 border-r w-48 shadow-sm">Patient</th>
@@ -1298,14 +1312,11 @@
                     ${timeHeaders}
                 </tr></thead><tbody class="divide-y divide-slate-200">`;
 
-            // Sort all patients by Location > Entry
             let sortedPatients = [...patients].sort(patientComparator);
             let lastLoc = "___START___";
 
             sortedPatients.forEach(p => {
                 let currentLoc = p.location || "Unspecified";
-                
-                // Insert Location Header Row if location changes
                 if (currentLoc !== lastLoc) {
                     detailHTML += `
                         <tr class="bg-indigo-50 border-y border-indigo-100">
@@ -1313,11 +1324,9 @@
                                 <div class="truncate w-44"><i class="fa-solid fa-location-dot mr-1 opacity-50"></i> ${currentLoc}</div>
                             </td>
                             <td colspan="${1 + totalHoursInt}" class="bg-indigo-50"></td>
-                        </tr>
-                    `;
+                        </tr>`;
                     lastLoc = currentLoc;
                 }
-                
                 const qColorText = getQTextColor(p.freq);
                 const qBadge = `<span class="font-mono font-bold ${qColorText}">Q${p.freq}</span>`;
                 
@@ -1326,10 +1335,8 @@
                         <td class="px-4 py-2 sticky left-0 bg-white group-hover:bg-slate-50 z-10 border-r border-slate-200 pl-8 shadow-sm">
                             <div class="font-medium text-slate-700 truncate" title="${p.name}">${p.name}</div>
                         </td>
-                        <td class="px-2 py-2 text-center border-r border-slate-100">${qBadge}</td>
-                `;
+                        <td class="px-2 py-2 text-center border-r border-slate-100">${qBadge}</td>`;
 
-                // Render Cells for Each Hour
                 for(let h=0; h<totalHoursInt; h++) {
                     let assignedDoc = null;
                     if (currentSchedule && currentSchedule[h]) {
@@ -1346,7 +1353,6 @@
                         if (assignedDoc === "UNASSIGNED") {
                              detailHTML += `<td class="p-1 border-l border-slate-100"><div class="w-full h-full bg-red-100 text-red-600 text-[10px] flex items-center justify-center rounded font-bold" title="Unassigned">!</div></td>`;
                         } else {
-                             // --- CHANGE: SHOW 4 LETTERS INSTEAD OF 3 ---
                              const abbr = assignedDoc.substring(0, 4).toUpperCase();
                              detailHTML += `<td class="p-1 border-l border-slate-100"><div class="w-full py-1 ${color.bg} ${color.text} text-[10px] flex items-center justify-center rounded font-bold border border-black/5" title="${assignedDoc}">${abbr}</div></td>`;
                         }
@@ -1356,9 +1362,8 @@
                 }
                 detailHTML += `</tr>`;
             });
-
             detailHTML += `</tbody></table>`;
-            detailContainer.innerHTML = detailHTML;
+            newDetailContainer.innerHTML = detailHTML;
         }
 
         function renderTimeline(assignment) {
@@ -1853,6 +1858,78 @@
                 showToast("Failed to copy"); 
             }
             document.body.removeChild(textarea);
+        }
+
+	function downloadCSV() {
+            if (!currentSchedule) {
+                showToast("Generate a schedule first!");
+                return;
+            }
+
+            // 1. Setup Headers
+            const startStr = document.getElementById('startTime').value;
+            const totalHoursInt = Math.ceil(shiftHours);
+            
+            // Columns: Location, Patient, Freq, Time1, Time2...
+            let csvRows = [];
+            let headers = ["Location", "Patient Name", "Frequency"];
+            
+            for(let i=0; i<totalHoursInt; i++) {
+                let d = new Date(`01/01/2000 ${startStr}`);
+                d.setHours(d.getHours() + i);
+                // Format: "5 PM"
+                let timeText = d.toLocaleTimeString([], {hour: 'numeric', hour12: true});
+                headers.push(timeText);
+            }
+            csvRows.push(headers.join(","));
+
+            // 2. Build Rows
+            // Use same sort order as table: Location > Entry
+            let sortedPatients = [...patients].sort(patientComparator);
+
+            sortedPatients.forEach(p => {
+                // Escape names for CSV (wrap in quotes if they contain commas)
+                const safeName = `"${p.name.replace(/"/g, '""')}"`;
+                const safeLoc = `"${(p.location || "Unspecified").replace(/"/g, '""')}"`;
+                const safeFreq = `Q${p.freq}`;
+
+                let row = [safeLoc, safeName, safeFreq];
+
+                // Fill Time Slots
+                for(let h=0; h<totalHoursInt; h++) {
+                    let assignedDoc = ""; // Empty string for no check
+                    
+                    if (currentSchedule[h]) {
+                        const hourAssignments = currentSchedule[h];
+                        Object.keys(hourAssignments).forEach(docName => {
+                            if (hourAssignments[docName].some(t => t.patient.id === p.id)) {
+                                // USE FULL NAME (docName) instead of substring
+                                assignedDoc = docName; 
+                            }
+                        });
+                    }
+                    
+                    // CSV safety for doc name
+                    row.push(`"${assignedDoc.replace(/"/g, '""')}"`);
+                }
+                csvRows.push(row.join(","));
+            });
+
+            // 3. Create and Download File
+            const csvString = csvRows.join("\n");
+            const blob = new Blob([csvString], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            // Filename with timestamp
+            const date = new Date().toISOString().slice(0,10);
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `wardwatch_schedule_${date}.csv`);
+            
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
 
         function switchView(view) {
