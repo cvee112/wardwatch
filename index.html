@@ -161,6 +161,18 @@
                             </div>
                             <div class="text-center text-xs font-semibold text-indigo-600 mt-1" id="clusterValueDisplay">Location Bonus: 15%</div>
                         </div>
+
+                        <!-- TIME BLOCKING TOGGLE -->
+                        <div class="mt-4 pt-4 border-t border-slate-200">
+                            <div class="flex items-center justify-between">
+                                <label class="text-sm font-bold text-slate-700">Time Blocking Mode</label>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="timeBlockingToggle" class="sr-only peer">
+                                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1 italic">Assign one doctor to cover ALL patients for specific hourly blocks.</p>
+                        </div>
                     </div>
                 </div>
 
@@ -284,7 +296,8 @@
                 <!-- Summary Table -->
                 <div>
                     <h3 class="text-lg font-bold text-slate-700 mb-2 ml-1">Doctor Summary</h3>
-                    <div class="bg-white rounded-lg shadow overflow-hidden border border-slate-200" id="summaryTableWrapper">
+                    <!-- FIXED: Changed overflow-hidden to overflow-x-auto -->
+                    <div class="bg-white rounded-lg shadow overflow-x-auto border border-slate-200" id="summaryTableWrapper">
                         <!-- Content Injected via JS -->
                     </div>
                 </div>
@@ -593,6 +606,7 @@
             // 1. Get Settings
             const equityFactor = parseInt(document.getElementById('equitySlider').value) / 100;
             const clusterVal = parseInt(document.getElementById('clusterSlider').value);
+            const useTimeBlocking = document.getElementById('timeBlockingToggle').checked;
             
             // Map 0-100 to discount (e.g. 15 -> 0.15 discount -> 0.85 multiplier)
             const clusterDiscount = clusterVal / 100;
@@ -631,9 +645,6 @@
             let assignment = {};
             doctors.forEach(d => { 
                 // Coefficient Tuning:
-                // Incoming (0.85): Long-shift/Solo doctors act as "Coverage Buckets".
-                // Debt (0.15): Short-shift doctors create work. Low penalty allows more primary assignment.
-                
                 let coverageRatio = totalCoverageScore > 0 ? d.coverageScore / totalCoverageScore : 0;
                 const incomingLoad = totalBurden * 0.85 * coverageRatio;
 
@@ -652,59 +663,139 @@
                 }; 
             });
 
-            // 5. Assign Primary Patients (Greedy Best Fit)
-            let unassigned = [...patients];
+            // --- TIME BLOCKING MODE ---
+            let blockSchedule = null; // Map of hour -> docName
 
-            // Sort by burden (descending) to place heavy patients first
-            unassigned.sort(() => Math.random() - 0.5);
-            unassigned.sort((a, b) => getBurden(b) - getBurden(a));
-
-            unassigned.forEach(p => {
-                let docObjects = Object.values(assignment);
+            if (useTimeBlocking) {
+                blockSchedule = new Array(totalHoursInt).fill(null);
                 
-                docObjects.sort((a, b) => {
-                    const costA = getCheckCountForDoc(p, a);
-                    const costB = getCheckCountForDoc(p, b);
+                // 1. Calculate Burden Per Hour
+                let hourlyBurden = new Array(totalHoursInt).fill(0);
+                patients.forEach(p => {
+                    for (let h = 0; h < totalHoursInt; h++) {
+                        if (isCheckDue(p.freq, h)) hourlyBurden[h]++;
+                    }
+                });
 
-                    // Effective Capacity Scaling
-                    const capA = (a.availHours * equityFactor) + (1 * (1 - equityFactor));
-                    const capB = (b.availHours * equityFactor) + (1 * (1 - equityFactor));
-                    const safeCapA = Math.max(capA, 0.1);
-                    const safeCapB = Math.max(capB, 0.1);
+                // 2. Sort hours by burden (desc) to assign hardest hours first
+                let hoursSorted = [];
+                for(let h=0; h<totalHoursInt; h++) hoursSorted.push(h);
+                hoursSorted.sort((a,b) => hourlyBurden[b] - hourlyBurden[a]);
 
-                    // Score: (Handicap + Allocated + NewCost) / Capacity
-                    let scoreA = (a.simulatedLoad + costA) / safeCapA;
-                    let scoreB = (b.simulatedLoad + costB) / safeCapB;
-
-                    // Preference Bonus
-                    const prefBonus = 0.6 + (0.39 * (1 - equityFactor));
+                // 3. Assign Blocks
+                hoursSorted.forEach(h => {
+                    // Find available doctors for this hour
+                    let availableDocs = Object.values(assignment).filter(d => isDoctorAvailableAtHour(d, h));
                     
-                    if (p.pref === a.name) scoreA *= prefBonus;
-                    if (p.pref === b.name) scoreB *= prefBonus;
+                    if (availableDocs.length > 0) {
+                        // Pick doc with lowest (CurrentLoad / Capacity)
+                        availableDocs.sort((a, b) => {
+                            const capA = (a.availHours * equityFactor) + (1 * (1 - equityFactor));
+                            const capB = (b.availHours * equityFactor) + (1 * (1 - equityFactor));
+                            const safeCapA = Math.max(capA, 0.1);
+                            const safeCapB = Math.max(capB, 0.1);
 
-                    // Clustering Bonus
-                    const hasLocA = a.patients.some(existing => existing.location === p.location);
-                    const hasLocB = b.patients.some(existing => existing.location === p.location);
-                    
-                    if (hasLocA) scoreA *= clusterMultiplier; 
-                    if (hasLocB) scoreB *= clusterMultiplier;
+                            // Load includes phantom + already assigned blocks
+                            const scoreA = (a.simulatedLoad + hourlyBurden[h]) / safeCapA;
+                            const scoreB = (b.simulatedLoad + hourlyBurden[h]) / safeCapB;
+                            return scoreA - scoreB;
+                        });
 
-                    return scoreA - scoreB;
+                        let chosen = availableDocs[0];
+                        blockSchedule[h] = chosen.name;
+                        chosen.simulatedLoad += hourlyBurden[h]; // Update load for next decision
+                    }
                 });
                 
-                let target = docObjects[0];
-                target.patients.push(p);
-                target.burdenLoad += getBurden(p);
-                target.simulatedLoad += getCheckCountForDoc(p, target);
-            });
+                // Note: We skip greedy patient assignment here because 
+                // in Block Mode, patients belong to time, not doctors.
+            } 
+            else {
+                // --- NORMAL MODE (Greedy Patient Assignment) ---
+                let unassigned = [...patients];
 
-            // 6. Run Simulation to determine Coverage Assignments
-            const simulation = simulateSchedule(assignment);
+                // Sort by burden (descending) to place heavy patients first
+                unassigned.sort(() => Math.random() - 0.5);
+                unassigned.sort((a, b) => getBurden(b) - getBurden(a));
+
+                unassigned.forEach(p => {
+                    let docObjects = Object.values(assignment);
+                    
+                    docObjects.sort((a, b) => {
+                        const costA = getCheckCountForDoc(p, a);
+                        const costB = getCheckCountForDoc(p, b);
+
+                        // Effective Capacity Scaling
+                        const capA = (a.availHours * equityFactor) + (1 * (1 - equityFactor));
+                        const capB = (b.availHours * equityFactor) + (1 * (1 - equityFactor));
+                        const safeCapA = Math.max(capA, 0.1);
+                        const safeCapB = Math.max(capB, 0.1);
+
+                        // Score: (Handicap + Allocated + NewCost) / Capacity
+                        let scoreA = (a.simulatedLoad + costA) / safeCapA;
+                        let scoreB = (b.simulatedLoad + costB) / safeCapB;
+
+                        // Preference Bonus
+                        const prefBonus = 0.6 + (0.39 * (1 - equityFactor));
+                        
+                        if (p.pref === a.name) scoreA *= prefBonus;
+                        if (p.pref === b.name) scoreB *= prefBonus;
+
+                        // Clustering Bonus
+                        const hasLocA = a.patients.some(existing => existing.location === p.location);
+                        const hasLocB = b.patients.some(existing => existing.location === p.location);
+                        
+                        if (hasLocA) scoreA *= clusterMultiplier; 
+                        if (hasLocB) scoreB *= clusterMultiplier;
+
+                        return scoreA - scoreB;
+                    });
+                    
+                    let target = docObjects[0];
+                    target.patients.push(p);
+                    target.burdenLoad += getBurden(p);
+                    target.simulatedLoad += getCheckCountForDoc(p, target);
+                });
+            }
+
+            // 6. Run Simulation to determine Coverage/Block Assignments
+            // Pass blockSchedule (is null in normal mode)
+            const simulation = simulateSchedule(assignment, blockSchedule);
             
             // 7. Update Real Active Stats
             Object.keys(assignment).forEach(k => {
                 assignment[k].activeLoad = simulation.stats[k].active;
             });
+
+            // 7b. If Block Mode, Populate "Primary" Patients for Visuals
+            if (useTimeBlocking) {
+                // Assign patient to the doctor who checked them the most
+                patients.forEach(p => {
+                    let maxChecks = -1;
+                    let bestDoc = null;
+                    
+                    // Count checks per doc for this patient
+                    Object.keys(simulation.stats).forEach(docName => {
+                        let checks = 0;
+                        // Scan schedule
+                        simulation.schedule.forEach(hourMap => {
+                            if (hourMap[docName]) {
+                                if (hourMap[docName].some(t => t.patient.id === p.id)) checks++;
+                            }
+                        });
+                        
+                        if (checks > maxChecks) {
+                            maxChecks = checks;
+                            bestDoc = docName;
+                        }
+                    });
+
+                    if (bestDoc && assignment[bestDoc]) {
+                        assignment[bestDoc].patients.push(p);
+                        assignment[bestDoc].burdenLoad += getBurden(p); // Rough attribution
+                    }
+                });
+            }
             
             // 8. Commit & Render
             currentAssignment = assignment;
@@ -723,7 +814,7 @@
          * Runs hour-by-hour to determine who covers whom.
          * Uses "Decision Load" (Projected Total) to intelligently assign coverage.
          */
-        function simulateSchedule(assignment) {
+        function simulateSchedule(assignment, blockSchedule = null) {
             const docKeys = Object.keys(assignment);
             const totalHoursInt = Math.ceil(shiftHours);
             const equityFactor = parseInt(document.getElementById('equitySlider').value) / 100;
@@ -739,7 +830,10 @@
             // Create flat task list
             let allTasks = [];
             Object.values(assignment).forEach(primaryDoc => {
-                primaryDoc.patients.forEach(p => {
+                // In Block Mode, patients list is empty initially, so we iterate GLOBAL patients
+                let sourcePatients = blockSchedule ? patients : primaryDoc.patients;
+                
+                sourcePatients.forEach(p => {
                     for (let h = 0; h < totalHoursInt; h++) {
                         if (isCheckDue(p.freq, h)) {
                             allTasks.push({ patient: p, primaryDoc: primaryDoc, hour: h });
@@ -747,6 +841,21 @@
                     }
                 });
             });
+            
+            // Remove duplicates in Block Mode (since we iterated global list for each doc)
+            if (blockSchedule) {
+                // In Block mode above loop runs N times (N=docs). 
+                // We actually just want to generate tasks once.
+                allTasks = [];
+                patients.forEach(p => {
+                    for (let h = 0; h < totalHoursInt; h++) {
+                        if (isCheckDue(p.freq, h)) {
+                            // Primary doc doesn't matter in block mode
+                            allTasks.push({ patient: p, primaryDoc: null, hour: h });
+                        }
+                    }
+                });
+            }
 
             allTasks.sort((a,b) => a.hour - b.hour);
 
@@ -756,55 +865,77 @@
             for (let h = 0; h < totalHoursInt; h++) {
                 let hourTasks = allTasks.filter(t => t.hour === h);
                 let hourAssignments = {};
-                let pending = [];
                 
-                hourTasks.forEach(t => {
-                    // Try Primary
-                    if (isDoctorAvailableAtHour(t.primaryDoc, h)) {
-                        simStats[t.primaryDoc.name].active++;
-                        simStats[t.primaryDoc.name].hourlyLoad[h]++;
-                        
-                        if(!hourAssignments[t.primaryDoc.name]) hourAssignments[t.primaryDoc.name] = [];
-                        hourAssignments[t.primaryDoc.name].push({ ...t, isCoverage: false });
-                    } else {
-                        pending.push(t);
-                    }
-                });
-
-                // Assign Coverage
-                pending.forEach(t => {
-                    let availableDocs = docKeys.filter(name => isDoctorAvailableAtHour(assignment[name], h));
+                if (blockSchedule) {
+                    // --- BLOCK MODE ASSIGNMENT ---
+                    let blockDocName = blockSchedule[h];
                     
-                    if (availableDocs.length === 0) {
-                        let key = "UNASSIGNED";
-                        if(!hourAssignments[key]) hourAssignments[key] = [];
-                        hourAssignments[key].push({ ...t, isCoverage: false, unassigned: true });
-                    } else {
-                        // Intelligent Sorting: Least Busy relative to Capacity Goal
-                        availableDocs.sort((a,b) => {
-                            const capA = (assignment[a].availHours * equityFactor) + (1 * (1 - equityFactor));
-                            const capB = (assignment[b].availHours * equityFactor) + (1 * (1 - equityFactor));
-                            const safeCapA = Math.max(capA, 0.1);
-                            const safeCapB = Math.max(capB, 0.1);
-
-                            const metricA = decisionLoad[a] / safeCapA;
-                            const metricB = decisionLoad[b] / safeCapB;
-                            
-                            if (Math.abs(metricA - metricB) < 0.05) {
-                                return simStats[a].active - simStats[b].active;
-                            }
-                            return metricA - metricB;
+                    if (blockDocName && assignment[blockDocName]) {
+                        hourAssignments[blockDocName] = [];
+                        hourTasks.forEach(t => {
+                            simStats[blockDocName].active++;
+                            simStats[blockDocName].hourlyLoad[h]++;
+                            // Add task to doc
+                            hourAssignments[blockDocName].push({ ...t, isCoverage: false, primaryDoc: assignment[blockDocName] });
                         });
-
-                        let coverDocName = availableDocs[0];
-                        simStats[coverDocName].active++;
-                        simStats[coverDocName].hourlyLoad[h]++;
-                        decisionLoad[coverDocName]++; // Increment projected load
-                        
-                        if(!hourAssignments[coverDocName]) hourAssignments[coverDocName] = [];
-                        hourAssignments[coverDocName].push({ ...t, isCoverage: true });
+                    } else {
+                        // Unassigned (No available doc for this block)
+                        let key = "UNASSIGNED";
+                        hourAssignments[key] = [];
+                        hourTasks.forEach(t => hourAssignments[key].push({ ...t, isCoverage: false, unassigned: true }));
                     }
-                });
+                } else {
+                    // --- NORMAL MODE ASSIGNMENT ---
+                    let pending = [];
+                    
+                    hourTasks.forEach(t => {
+                        // Try Primary
+                        if (t.primaryDoc && isDoctorAvailableAtHour(t.primaryDoc, h)) {
+                            simStats[t.primaryDoc.name].active++;
+                            simStats[t.primaryDoc.name].hourlyLoad[h]++;
+                            
+                            if(!hourAssignments[t.primaryDoc.name]) hourAssignments[t.primaryDoc.name] = [];
+                            hourAssignments[t.primaryDoc.name].push({ ...t, isCoverage: false });
+                        } else {
+                            pending.push(t);
+                        }
+                    });
+
+                    // Assign Coverage
+                    pending.forEach(t => {
+                        let availableDocs = docKeys.filter(name => isDoctorAvailableAtHour(assignment[name], h));
+                        
+                        if (availableDocs.length === 0) {
+                            let key = "UNASSIGNED";
+                            if(!hourAssignments[key]) hourAssignments[key] = [];
+                            hourAssignments[key].push({ ...t, isCoverage: false, unassigned: true });
+                        } else {
+                            // Intelligent Sorting
+                            availableDocs.sort((a,b) => {
+                                const capA = (assignment[a].availHours * equityFactor) + (1 * (1 - equityFactor));
+                                const capB = (assignment[b].availHours * equityFactor) + (1 * (1 - equityFactor));
+                                const safeCapA = Math.max(capA, 0.1);
+                                const safeCapB = Math.max(capB, 0.1);
+
+                                const metricA = decisionLoad[a] / safeCapA;
+                                const metricB = decisionLoad[b] / safeCapB;
+                                
+                                if (Math.abs(metricA - metricB) < 0.05) {
+                                    return simStats[a].active - simStats[b].active;
+                                }
+                                return metricA - metricB;
+                            });
+
+                            let coverDocName = availableDocs[0];
+                            simStats[coverDocName].active++;
+                            simStats[coverDocName].hourlyLoad[h]++;
+                            decisionLoad[coverDocName]++; // Increment projected load
+                            
+                            if(!hourAssignments[coverDocName]) hourAssignments[coverDocName] = [];
+                            hourAssignments[coverDocName].push({ ...t, isCoverage: true });
+                        }
+                    });
+                }
                 
                 hourlyPlan.push(hourAssignments);
             }
