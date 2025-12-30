@@ -1199,12 +1199,12 @@
             return DOC_COLORS[idx % DOC_COLORS.length];
         }
 
-	function renderSummaryTable(assignment) {
+        function renderSummaryTable(assignment) {
             const summaryContainer = document.getElementById('summaryTableWrapper');
             const detailContainer = document.getElementById('detailTableWrapper');
             
             // --- 1. RENDER DOCTOR SUMMARY TABLE ---
-            // (This section remains unchanged, just compacting it for brevity in this snippet)
+            
             let headerHTML = `<table class="w-full text-sm text-left text-slate-600"><thead class="text-xs text-slate-700 uppercase bg-slate-50 border-b">
                 <tr><th class="px-6 py-3 font-bold text-slate-800 whitespace-nowrap bg-slate-50 sticky left-0 z-10 border-r">Doctor</th>`;
             locations.forEach(l => {
