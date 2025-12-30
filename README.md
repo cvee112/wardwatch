@@ -3,7 +3,7 @@
 [![Live Demo](https://img.shields.io/badge/demo-live-green.svg)](https://cvee112.github.io/wardwatch/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**WardWatch** is a browser-based scheduling and allocation tool designed for medical wards. It automates the equitable distribution of patient monitoring tasks (vital sign checks) among available staff (doctors/nurses) based on shift duration, patient acuity (frequency of checks), and geographical location within the ward.
+**WardWatch** is a browser-based scheduling and allocation tool designed for medical wards. It automates the equitable distribution of patient monitoring tasks (vital sign checks) among available staff (e.g., interns/clerks) based on shift duration, patient acuity (frequency of checks), and geographical location within the ward.
 
 The application runs entirely on the client side using vanilla JavaScript and Tailwind CSS, ensuring no patient data is ever sent to an external server.
 
@@ -90,7 +90,7 @@ Since WardWatch is a static web application, it requires no build step or backen
 
 1.  Clone the repository:
     ```bash
-    git clone [https://github.com/cvee112/wardwatch.git](https://github.com/cvee112/wardwatch.git)
+    git clone https://github.com/cvee112/wardwatch.git
     ```
 2.  Navigate to the directory:
     ```bash
